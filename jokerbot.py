@@ -1506,56 +1506,51 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     register_user(update.effective_user)
 
-    # Grab the document — Telegram always populates this for file messages
     doc = update.message.document if update.message else None
     if not doc:
         return  # not a document message, ignore silently
 
-    # If we're not in the custom_body step, tell the user and bail
+    # Only active during the custom_body step
     if (not context.user_data.get('awaiting_email')
             or context.user_data.get('email_step') != 'custom_body'):
         await update.message.reply_text(
             f"{JM}"
-            "⚠️ *Not expecting a file right now.*\n\n"
+            "\u26a0\ufe0f *Not expecting a file right now.*\n\n"
             "Start a *Custom Email* flow first, then upload your HTML "
             "when asked for the body.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🏠  Menu", callback_data="back")]
+                [InlineKeyboardButton("\U0001f3e0  Menu", callback_data="back")]
             ]),
             parse_mode='Markdown')
         return
 
     fname = doc.file_name or ""
     mime  = doc.mime_type or ""
-
-    # Accept .html extension OR text/html mime type
     is_html = fname.lower().endswith('.html') or 'html' in mime.lower()
+
     if not is_html:
         await update.message.reply_text(
             f"{JM}"
-            f"❌ *Wrong file type:* `{md_safe(fname or mime)}`
-
-"
+            f"\u274c *Wrong file type:* `{md_safe(fname or mime)}`\n\n"
             "Please upload a `.html` file, or type your body as text.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+                [InlineKeyboardButton("\u274c  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
 
-    # File size guard (1 MB)
     if doc.file_size and doc.file_size > 1_048_576:
         await update.message.reply_text(
-            f"{JM}❌ File too large (max 1 MB). Please upload a smaller HTML file.",
+            f"{JM}\u274c File too large (max 1 MB). Please upload a smaller HTML file.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+                [InlineKeyboardButton("\u274c  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
 
     # Acknowledge immediately so the user knows something is happening
     await update.message.reply_text(
-        f"{JM}⏳ Reading your HTML file…",
+        f"{JM}\u23f3 Reading your HTML file\u2026",
         parse_mode='Markdown')
 
     try:
@@ -1568,20 +1563,18 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"handle_document: download failed for user {user_id}: {e}", exc_info=True)
         await update.message.reply_text(
-            f"{JM}❌ Could not read the file: `{md_safe(str(e))}`
-
-Please try again.",
+            f"{JM}\u274c Could not read the file: `{md_safe(str(e))}`\n\nPlease try again.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+                [InlineKeyboardButton("\u274c  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
 
     if not html_body.strip():
         await update.message.reply_text(
-            f"{JM}❌ The file appears to be empty. Please upload a valid HTML file.",
+            f"{JM}\u274c The file appears to be empty. Please upload a valid HTML file.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+                [InlineKeyboardButton("\u274c  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
@@ -1589,21 +1582,17 @@ Please try again.",
     context.user_data['email_body']  = html_body
     context.user_data['filled_vars'] = {}
 
-    plain    = html_to_text(html_body)
-    preview  = plain[:200].strip()
+    plain   = html_to_text(html_body)
+    preview = plain[:200].strip()
     if len(plain) > 200:
-        preview += "…"
+        preview += "\u2026"
 
     display_name = fname if fname else "uploaded file"
     await update.message.reply_text(
         f"{JM}"
-        f"✅ *Loaded:* `{md_safe(display_name)}`
-"
-        f"📏 `{len(html_body):,}` bytes
-
-"
-        f"📝 *Preview:*
-`{md_safe(preview)}`",
+        f"\u2705 *Loaded:* `{md_safe(display_name)}`\n"
+        f"\U0001f4cf `{len(html_body):,}` bytes\n\n"
+        f"\U0001f4dd *Preview:*\n`{md_safe(preview)}`",
         parse_mode='Markdown')
 
     await show_confirm_screen(update, context)
