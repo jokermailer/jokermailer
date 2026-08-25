@@ -1,0 +1,103 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+     <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>
+               Google Support Representative Verification
+          </title>
+     </head>
+     <body style="margin:0; padding:0; background-color:#f2f2f2; font-family:Roboto, Arial, sans-serif;">
+          <table
+               width="100%"
+               cellpadding="0"
+               cellspacing="0"
+               style="background-color:#f2f2f2; padding:40px 0;"
+          >
+               <tr>
+                    <td align="center">
+                         <table
+                              width="600"
+                              cellpadding="0"
+                              cellspacing="0"
+                              style="background-color:#ffffff; border-radius:8px; padding:40px 20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.05);"
+                         >
+                              <tr>
+                                   <td style="padding-bottom:10px;">
+                                        <img
+                                             src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg"
+                                             alt="Google Logo"
+                                             width="120"
+                                             style="display:block; margin:0 auto;"
+                                        >
+                                        <div
+                                             style="height:5px; width:180px; background:linear-gradient(90deg, #4285F4, #EA4335, #FBBC05, #34A853); border-radius:3px; margin:10px auto 0 auto;"
+                                        ></div>
+                                   </td>
+                              </tr>
+                              <tr>
+                                   <td style="font-size:22px; font-weight:bold; color:#333333; padding-top:30px; padding-bottom:10px;">
+                                        Support Verification Requested
+                                   </td>
+                              </tr>
+                              <tr>
+                                   <td style="font-size:16px; color:#666666; padding-bottom:30px;">
+                                        Live Assistance Confirmation
+                                   </td>
+                              </tr>
+                              <tr>
+                                   <td style="font-size:15px; color:#444444; padding:0 10px 30px; line-height:1.6;">
+                                        You recently initiated a live support session with the Google Support team.<br><br>
+                                        As part of our commitment to security and transparency, below are the details of the verified support staff member you're currently connected with. Please use this information to confirm their identity.
+                                   </td>
+                              </tr>
+                              <tr>
+                                   <td align="center" style="padding-bottom:30px;">
+                                        <table
+                                             width="100%"
+                                             cellpadding="0"
+                                             cellspacing="0"
+                                             style="border:1px solid #eeeeee; border-radius:10px; background-color:#fafafa;"
+                                        >
+                                             <tr>
+                                                  <td style="width:50%; padding:20px; font-weight:bold; font-size:14px; color:#333333; border-right:1px solid #eeeeee; text-align:center;">
+                                                       Support Staff
+                                                  </td>
+                                                  <td style="width:50%; padding:20px; font-weight:bold; font-size:14px; color:#333333; text-align:center;">
+                                                       Ticket Number
+                                                  </td>
+                                             </tr>
+                                             <tr>
+                                                  <td style="width:50%; padding:20px; color:#666666; font-size:15px; border-top:1px solid #eeeeee; border-right:1px solid #eeeeee; text-align:center;">
+                                                       {staff_name}
+                                                  </td>
+                                                  <td style="width:50%; padding:20px; color:#666666; font-size:15px; border-top:1px solid #eeeeee; text-align:center;">
+                                                       {ticket_number}
+                                                  </td>
+                                             </tr>
+                                        </table>
+                                   </td>
+                              </tr>
+                              <tr>
+                                   <td style="font-size:13px; color:#999999; padding:0 20px 20px; line-height:1.5;">
+                                        This message was generated following your live request for support from a Google representative. If you are not in contact with support, please disregard this message or report any suspicious activity at <a href="https://support.google.com" style="color:#4285F4; text-decoration:none;">support.google.com</a>.
+                                   </td>
+                              </tr>
+                              <tr>
+                                   <td style="padding-top:30px;">
+                                        <hr style="border:none; border-top:1px solid #dddddd; margin:20px 0;">
+                                   </td>
+                              </tr>
+                              <tr>
+                                   <td style="font-size:12px; color:#cccccc; padding-top:0;">
+                                        © 2025 Google LLC · 1600 Amphitheatre Parkway, Mountain View, CA 94043
+                                   </td>
+                              </tr>
+                         </table>
+                    </td>
+               </tr>
+          </table>
+     </body>
+</html>
