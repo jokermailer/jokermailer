@@ -244,6 +244,7 @@ def load_templates_from_files():
         "BANKS":     {"display_name": "🏦 BANKS",     "countries": {}},
         "CRYPTO":    {"display_name": "🪙 CRYPTO",    "types": {}},
         "AUTHORITY": {"display_name": "🏛️ AUTHORITY", "items": {}},
+        "EMAIL":     {"display_name": "📧 EMAIL",     "items": {}},
     }
 
     def load_file(f):
@@ -307,6 +308,18 @@ def load_templates_from_files():
                     t = load_file(tf)
                     if t and t.get('body'):
                         templates["AUTHORITY"]["items"][sn]["templates"].append(t)
+
+    email_path = TEMPLATES_DIR / "email"
+    if email_path.exists():
+        for svc_folder in email_path.iterdir():
+            if not svc_folder.is_dir(): continue
+            sn = svc_folder.name
+            templates["EMAIL"]["items"].setdefault(sn, {"templates": []})
+            for tf in svc_folder.glob("*"):
+                if tf.is_file() and tf.suffix in ('.json', '.html', '.txt'):
+                    t = load_file(tf)
+                    if t and t.get('body'):
+                        templates["EMAIL"]["items"][sn]["templates"].append(t)
 
     return templates
 
@@ -387,7 +400,7 @@ def find_template(template_id: str):
                 for itd in td["items"].values():
                     for t in itd["templates"]:
                         if t['id'] == template_id: return t
-        elif cat_key == "AUTHORITY":
+        elif cat_key in ("AUTHORITY", "EMAIL"):
             for itd in cat["items"].values():
                 for t in itd["templates"]:
                     if t['id'] == template_id: return t
@@ -730,6 +743,13 @@ async def show_categories(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🏛️ Authority  ·  {sc} services  ·  {tc} templates",
             callback_data="cat_AUTHORITY")])
 
+    if TEMPLATES["EMAIL"]["items"]:
+        sc = len(TEMPLATES["EMAIL"]["items"])
+        tc = sum(len(i.get("templates", [])) for i in TEMPLATES["EMAIL"]["items"].values())
+        kb.append([InlineKeyboardButton(
+            f"📧 Email  ·  {sc} services  ·  {tc} templates",
+            callback_data="cat_EMAIL")])
+
     kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer")])
     await update.callback_query.edit_message_text(
         f"{JM}"
@@ -820,6 +840,18 @@ async def show_items(update: Update, context: ContextTypes.DEFAULT_TYPE,
                                                 callback_data=f"item_AUTHORITY_{name}")])
         kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer_templates")])
 
+    elif category == "EMAIL":
+        header_text = (
+            f"{JM}"
+            "📧 *Email* — pick a service:"
+        )
+        for name, idata in TEMPLATES["EMAIL"]["items"].items():
+            n = len(idata["templates"])
+            if n:
+                kb.append([InlineKeyboardButton(f"📧 {name}  ·  {n} templates",
+                                                callback_data=f"item_EMAIL_{name}")])
+        kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer_templates")])
+
     elif category == "CRYPTO" and crypto_type:
         tdata       = TEMPLATES["CRYPTO"]["types"][crypto_type]
         header_text = (
@@ -865,6 +897,13 @@ async def show_templates(update: Update, context: ContextTypes.DEFAULT_TYPE,
         templates = TEMPLATES["AUTHORITY"]["items"][svc]["templates"]
         header    = f"🏛️ *{md_safe(svc)}*"
         back_cb   = "cat_AUTHORITY"
+
+    elif data.startswith("item_EMAIL_"):
+        svc       = data.replace("item_EMAIL_", "")
+        context.user_data['current_item'] = svc
+        templates = TEMPLATES["EMAIL"]["items"][svc]["templates"]
+        header    = f"📧 *{md_safe(svc)}*"
+        back_cb   = "cat_EMAIL"
 
     elif data.startswith("item_CRYPTO_"):
         parts       = data.replace("item_CRYPTO_", "").split("_", 1)
@@ -1621,7 +1660,7 @@ def main():
             total += sum(len(i.get("templates", []))
                          for td in cat["types"].values()
                          for i in td["items"].values())
-        elif cat_key == "AUTHORITY":
+        elif cat_key in ("AUTHORITY", "EMAIL"):
             total += sum(len(i.get("templates", [])) for i in cat["items"].values())
 
     logger.info(f"✅ Loaded {total} templates — invite-only mode active")
