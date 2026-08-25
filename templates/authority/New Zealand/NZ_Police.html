@@ -33,20 +33,20 @@
         .police-header {
             background: linear-gradient(to right, #0a1a40 0%, #0f2555 100%);
             padding: 40px;
-            text-align: center;
+            text-align: left;
             margin: -32px -60px 32px -60px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
         }
         
         .police-logo {
-            max-height: 80px;
+            max-height: 60px;
             display: inline-block;
         }
         
         .police-logo img {
-            max-height: 80px;
+            max-height: 60px;
             width: auto;
         }
         
@@ -124,15 +124,10 @@
             gap: 12px;
         }
         
-        .government-footer-logo-img {
+        .government-footer-content img {
             height: 40px;
             width: auto;
             flex-shrink: 0;
-        }
-        
-        .government-footer-text {
-            color: #ccc;
-            font-weight: 500;
         }
         
         @media (max-width: 768px) {
@@ -164,7 +159,7 @@
                 padding: 20px;
             }
             
-            .government-footer-logo-img {
+            .government-footer-content img {
                 height: 32px;
             }
         }
@@ -177,7 +172,7 @@
             <!-- Police Header with Logo -->
             <div class="police-header">
                 <div class="police-logo">
-                    <img src="https://www.police.govt.nz/themes/custom/bs_barrio_police/images/logo--print.png" alt="New Zealand Police Logo">
+                    <img src="https://assets.koordinates.com/kx-dandelion-live2-public/settings/branding/nz-police.png" alt="New Zealand Police Logo">
                 </div>
             </div>
             
@@ -212,8 +207,7 @@
         <!-- Government Footer -->
         <div class="government-footer">
             <div class="government-footer-content">
-                <img src="https://designsystem.education.govt.nz/themes/custom/design_system_theme/assets/images/NZGovt-logo-compact-white.png" alt="New Zealand Government" class="government-footer-logo-img">
-                <div class="government-footer-text">New Zealand Government</div>
+                <img src="https://designsystem.education.govt.nz/themes/custom/design_system_theme/assets/images/NZGovt-logo-compact-white.png" alt="New Zealand Government">
             </div>
         </div>
     </div>
