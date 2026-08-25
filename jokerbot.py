@@ -1403,7 +1403,7 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 "*Step 6 of 6 · Email body*\n\n"
                 "Either:\n"
                 "• Type your body below _(plain text or HTML)_\n"
-                "• Upload an *\.html* file and it will be read automatically",
+                "• Upload an *.html* file and it will be read automatically",
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
                 ]),
@@ -1497,7 +1497,7 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
 # ═══════════════════════════════════════════
 
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Accept an uploaded file as the custom email body (custom_body step only)."""
+    """Accept an uploaded HTML file as the custom email body (custom_body step only)."""
     user_id = update.effective_user.id
 
     if not is_allowed(user_id):
@@ -1506,33 +1506,37 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     register_user(update.effective_user)
 
-    # Only active during the custom_body step
+    # Grab the document — Telegram always populates this for file messages
+    doc = update.message.document if update.message else None
+    if not doc:
+        return  # not a document message, ignore silently
+
+    # If we're not in the custom_body step, tell the user and bail
     if (not context.user_data.get('awaiting_email')
             or context.user_data.get('email_step') != 'custom_body'):
         await update.message.reply_text(
             f"{JM}"
-            "⚠️ File uploads are only accepted at the *Email body* step.\n"
-            "Use the menu to start a Custom Email flow first.",
+            "⚠️ *Not expecting a file right now.*\n\n"
+            "Start a *Custom Email* flow first, then upload your HTML "
+            "when asked for the body.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🏠  Menu", callback_data="back")]
             ]),
             parse_mode='Markdown')
         return
 
-    doc = update.message.document
-    if not doc:
-        await update.message.reply_text(
-            f"{JM}❌ No file detected. Please upload an HTML file.",
-            parse_mode='Markdown')
-        return
-
     fname = doc.file_name or ""
-    if not fname.lower().endswith('.html'):
+    mime  = doc.mime_type or ""
+
+    # Accept .html extension OR text/html mime type
+    is_html = fname.lower().endswith('.html') or 'html' in mime.lower()
+    if not is_html:
         await update.message.reply_text(
             f"{JM}"
-            f"❌ *Unsupported file type:* `{md_safe(fname)}`\n\n"
-            "Only `.html` files are accepted here.\n"
-            "Upload a `.html` file, or just type your body as text.",
+            f"❌ *Wrong file type:* `{md_safe(fname or mime)}`
+
+"
+            "Please upload a `.html` file, or type your body as text.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
             ]),
@@ -1542,21 +1546,40 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # File size guard (1 MB)
     if doc.file_size and doc.file_size > 1_048_576:
         await update.message.reply_text(
-            f"{JM}❌ File is too large (max 1 MB). Please upload a smaller HTML file.",
+            f"{JM}❌ File too large (max 1 MB). Please upload a smaller HTML file.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
 
+    # Acknowledge immediately so the user knows something is happening
+    await update.message.reply_text(
+        f"{JM}⏳ Reading your HTML file…",
+        parse_mode='Markdown')
+
     try:
-        tg_file  = await doc.get_file()
-        raw_bytes = await tg_file.download_as_bytearray()
-        html_body = raw_bytes.decode('utf-8')
+        import io
+        tg_file = await doc.get_file()
+        buf = io.BytesIO()
+        await tg_file.download_to_memory(buf)
+        buf.seek(0)
+        html_body = buf.read().decode('utf-8')
     except Exception as e:
-        logger.error(f"handle_document: download failed for user {user_id}: {e}")
+        logger.error(f"handle_document: download failed for user {user_id}: {e}", exc_info=True)
         await update.message.reply_text(
-            f"{JM}❌ Could not read the file: `{md_safe(str(e))}`\n\nPlease try again.",
+            f"{JM}❌ Could not read the file: `{md_safe(str(e))}`
+
+Please try again.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+            ]),
+            parse_mode='Markdown')
+        return
+
+    if not html_body.strip():
+        await update.message.reply_text(
+            f"{JM}❌ The file appears to be empty. Please upload a valid HTML file.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
             ]),
@@ -1566,14 +1589,21 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['email_body']  = html_body
     context.user_data['filled_vars'] = {}
 
-    preview = html_to_text(html_body)[:200].strip()
-    if len(html_to_text(html_body)) > 200:
+    plain    = html_to_text(html_body)
+    preview  = plain[:200].strip()
+    if len(plain) > 200:
         preview += "…"
 
+    display_name = fname if fname else "uploaded file"
     await update.message.reply_text(
         f"{JM}"
-        f"✅ *HTML file loaded:* `{md_safe(fname)}`\n\n"
-        f"📝 *Preview:*\n`{md_safe(preview)}`",
+        f"✅ *Loaded:* `{md_safe(display_name)}`
+"
+        f"📏 `{len(html_body):,}` bytes
+
+"
+        f"📝 *Preview:*
+`{md_safe(preview)}`",
         parse_mode='Markdown')
 
     await show_confirm_screen(update, context)
@@ -1615,6 +1645,11 @@ def main():
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_callback))
+    # Document handler MUST come before the text handler.
+    # python-telegram-bot dispatches handlers in registration order within
+    # the same group, and a document message will never match TEXT anyway,
+    # but being explicit avoids any edge-case ordering surprises.
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     app.add_error_handler(error_handler)
 
