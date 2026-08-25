@@ -1,204 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Support - Session Confirmation</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Confirmation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'Google Sans', Roboto, Arial, sans-serif;
-            background-color: #f1f3f4;
-            color: #202124;
-            line-height: 1.5;
-        }
+    body {
+      background-color: #f1f3f4;
+      font-family: 'Google Sans', Roboto, Arial, sans-serif;
+      font-size: 14px;
+      color: #202124;
+    }
 
-        .email-container {
-            max-width: 560px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-        }
+    .email-wrapper {
+      max-width: 420px;
+      margin: 30px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
 
-        .header {
-            background-color: #ffffff;
-            padding: 24px 32px 20px;
-            border-bottom: 1px solid #e8eaed;
-        }
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 36px 32px 24px;
+      border-bottom: 1px solid #e8eaed;
+    }
 
-        .header img {
-            height: 30px;
-            width: auto;
-            display: block;
-        }
+    .google-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 26px;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+      margin-bottom: 18px;
+    }
 
-        .hero {
-            padding: 28px 32px 20px;
-            border-bottom: 1px solid #e8eaed;
-        }
+    .google-logo .g { color: #4285F4; }
+    .google-logo .o1 { color: #EA4335; }
+    .google-logo .o2 { color: #FBBC05; }
+    .google-logo .g2 { color: #4285F4; }
+    .google-logo .l  { color: #34A853; }
+    .google-logo .e  { color: #EA4335; }
 
-        .hero-title {
-            font-size: 18px;
-            font-weight: 500;
-            color: #202124;
-            margin-bottom: 10px;
-        }
+    .g-icon {
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 20px;
+      display: block;
+    }
 
-        .hero-subtitle {
-            font-size: 14px;
-            color: #5f6368;
-            line-height: 1.6;
-        }
+    .divider-colored {
+      width: 36px;
+      height: 3px;
+      margin: 0 auto 4px;
+      background: linear-gradient(to right, #4285F4 25%, #EA4335 25%, #EA4335 50%, #FBBC05 50%, #FBBC05 75%, #34A853 75%);
+      border-radius: 2px;
+    }
 
-        .details {
-            padding: 24px 32px 8px;
-        }
+    /* Title section */
+    .title-section {
+      padding: 28px 32px 0;
+    }
 
-        .details-heading {
-            font-size: 11px;
-            font-weight: 600;
-            color: #80868b;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 16px;
-        }
+    .email-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #202124;
+      text-align: center;
+      margin-bottom: 16px;
+    }
 
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #e8eaed;
-        }
+    .case-id-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #5f6368;
+      margin-bottom: 24px;
+    }
 
-        .detail-row:first-of-type {
-            border-top: 1px solid #e8eaed;
-        }
+    .case-id-label {
+      color: #5f6368;
+    }
 
-        .detail-label {
-            font-size: 13px;
-            color: #80868b;
-        }
+    .case-id-value {
+      font-weight: 600;
+      color: #202124;
+    }
 
-        .detail-value {
-            font-size: 14px;
-            color: #202124;
-            font-weight: 500;
-            text-align: right;
-        }
+    /* Info box */
+    .info-box {
+      margin: 0 32px 20px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #4285F4;
+      border-radius: 0 4px 4px 0;
+      padding: 16px 18px;
+    }
 
-        .notice {
-            margin: 20px 32px 24px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            padding: 14px 16px;
-        }
+    .info-box p {
+      font-size: 14px;
+      color: #202124;
+      line-height: 1.6;
+    }
 
-        .notice p {
-            font-size: 13px;
-            color: #5f6368;
-            line-height: 1.6;
-        }
+    /* Details box */
+    .details-box {
+      margin: 0 32px 24px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #4285F4;
+      border-radius: 0 4px 4px 0;
+      padding: 16px 18px;
+    }
 
-        .notice p + p {
-            margin-top: 8px;
-        }
+    .details-box .detail-line {
+      font-size: 14px;
+      color: #202124;
+      line-height: 1.8;
+    }
 
-        .footer-links {
-            padding: 16px 32px;
-            border-top: 1px solid #e8eaed;
-            text-align: center;
-        }
+    .details-box .detail-line strong {
+      font-weight: 700;
+    }
 
-        .footer-links a {
-            font-size: 12px;
-            color: #80868b;
-            text-decoration: none;
-            padding: 0 10px;
-            border-right: 1px solid #e8eaed;
-        }
+    /* Footer text */
+    .footer-text {
+      padding: 0 32px 28px;
+    }
 
-        .footer-links a:last-child {
-            border-right: none;
-        }
+    .footer-text p {
+      font-size: 13px;
+      color: #5f6368;
+      line-height: 1.65;
+      margin-bottom: 14px;
+    }
 
-        .footer-links a:hover {
-            color: #202124;
-        }
+    .footer-text p:last-child {
+      margin-bottom: 0;
+    }
 
-        .footer-copyright {
-            background-color: #f1f3f4;
-            padding: 14px 0;
-            text-align: center;
-        }
-
-        .footer-copyright p {
-            font-size: 11px;
-            color: #80868b;
-        }
-
-        .color-bar {
-            height: 4px;
-            background: linear-gradient(to right, #4285F4 25%, #EA4335 25%, #EA4335 50%, #FBBC04 50%, #FBBC04 75%, #34A853 75%);
-        }
-    </style>
+    .footer-text .italic-note {
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
-    <div class="email-container">
+  <div class="email-wrapper">
 
-        <!-- Colour bar -->
-        <div class="color-bar"></div>
+    <!-- Header with Google logo -->
+    <div class="header">
+      <img src="https://cdn.freebiesupply.com/images/large/2x/google-logo-transparent.png" alt="Google" style="height: 36px; width: auto; display: block; margin: 0 auto 18px;" />
 
-        <!-- Header -->
-        <div class="header">
-            <img src="https://cdn.freebiesupply.com/images/large/2x/google-logo-transparent.png" alt="Google">
-        </div>
+      <!-- Google G SVG icon -->
+      <svg class="g-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        <path fill="none" d="M0 0h48v48H0z"/>
+      </svg>
 
-        <!-- Hero -->
-        <div class="hero">
-            <div class="hero-title">Support Session Confirmation</div>
-            <div class="hero-subtitle">This is a confirmation of your active support session with a Google Specialist. Please keep this reference number available for the duration of your session.</div>
-        </div>
-
-        <!-- Details -->
-        <div class="details">
-            <div class="details-heading">Session Details</div>
-            <div class="detail-row">
-                <span class="detail-label">Specialist Name</span>
-                <span class="detail-value">[EMPLOYEE_NAME]</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Reference Number</span>
-                <span class="detail-value">[CASE_ID]</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Session Started</span>
-                <span class="detail-value">[DATE_TIME]</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Session Status</span>
-                <span class="detail-value">Active</span>
-            </div>
-        </div>
-
-        <!-- Notice -->
-        <div class="notice">
-            <p>To confirm you are speaking with a Google Specialist, please ensure the name and reference number above match the details provided during your session.</p>
-            <p>Google will never ask for your password, payment details, or one-time verification codes during a support session. If you are asked for any of these, end the session immediately.</p>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer-links">
-            <a href="https://support.google.com" target="_blank">Help Centre</a>
-            <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a>
-            <a href="https://support.google.com/accounts/troubleshooter/2402620" target="_blank">Report a Concern</a>
-        </div>
-        <div class="footer-copyright">
-            <p>&copy; 2026 Google LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043</p>
-        </div>
-
+      <div class="divider-colored"></div>
     </div>
+
+    <!-- Title -->
+    <div class="title-section">
+      <h1 class="email-title">Employee Confirmation</h1>
+      <div class="case-id-row">
+        <span class="case-id-label">Case ID:</span>
+        <span class="case-id-value">diwua</span>
+      </div>
+    </div>
+
+    <!-- Info box -->
+    <div class="info-box">
+      <p>Should your connection be interrupted, please note the following case details provided below.</p>
+    </div>
+
+    <!-- Details box -->
+    <div class="details-box">
+      <p class="detail-line"><strong>Representative: adi</strong></p>
+      <p class="detail-line"><strong>Case ID: awoijd</strong></p>
+    </div>
+
+    <!-- Footer text -->
+    <div class="footer-text">
+      <p class="italic-note">If you are not currently on the line, you may safely ignore this message.</p>
+      <p>This information is confidential and should not be shared with anyone outside of this interaction.</p>
+      <p>We sent you this email to help verify the identity of your Google representative.</p>
+    </div>
+
+  </div>
 </body>
 </html>
