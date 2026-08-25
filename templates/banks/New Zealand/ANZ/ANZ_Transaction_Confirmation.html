@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANZ - Transaction Confirmed</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background-color: #004165;
+            padding: 16px 20px;
+            text-align: left;
+        }
+        
+        .header img {
+            height: 35px;
+            display: block;
+            max-width: 100%;
+        }
+        
+        .hero {
+            background-color: #18699c;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .hero-content {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        .hero-title {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+            padding-bottom: 24px;
+        }
+        
+        .greeting {
+            color: #ffffff;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        
+        .info-box {
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .info-label {
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            opacity: 0.85;
+        }
+        
+        .info-value {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 600;
+            word-break: break-word;
+        }
+        
+        .info-value-small {
+            color: #ffffff;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        
+        .details-text {
+            color: #ffffff;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0.85;
+            padding-top: 24px;
+        }
+        
+        .footer {
+            background-color: #18699c;
+            padding: 28px 16px 22px;
+            text-align: center;
+        }
+        
+        .footer-links {
+            margin-bottom: 14px;
+            font-size: 11px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0;
+        }
+        
+        .footer-links a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0 15px;
+            display: inline-block;
+            border-right: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        
+        .footer-links a:last-child {
+            border-right: none;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .footer-copyright {
+            color: #ffffff;
+            font-size: 10px;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 24px;
+            }
+            
+            .greeting {
+                font-size: 14px;
+            }
+            
+            .info-value {
+                font-size: 18px;
+            }
+            
+            .info-value-small {
+                font-size: 13px;
+            }
+            
+            .footer-links {
+                gap: 10px;
+            }
+            
+            .footer-links a {
+                padding: 0 10px;
+                border-right: none;
+            }
+            
+            .footer-links a:not(:last-child)::after {
+                content: " •";
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <!-- Header -->
+            <tr>
+                <td class="header">
+                    <img src="https://cdn.freebiesupply.com/logos/large/2x/anz-2-logo-black-and-white.png" alt="ANZ Logo">
+                </td>
+            </tr>
+            
+            <!-- Hero Section -->
+            <tr>
+                <td class="hero">
+                    <div class="hero-content">
+                        <div class="hero-title">Transaction Confirmed</div>
+                        
+                        <div class="greeting">
+                            Kia Ora [CUSTOMER_NAME],<br><br>
+                            Your transfer has been processed successfully.
+                        </div>
+                        
+                        <div class="info-box">
+                            <div class="info-label">Transfer Amount</div>
+                            <div class="info-value">$[AMOUNT]</div>
+                        </div>
+                        
+                        <div class="info-box">
+                            <div class="info-label">To</div>
+                            <div class="info-value-small">
+                                [RECIPIENT_NAME]<br>
+                                [RECIPIENT_ACCOUNT]
+                            </div>
+                        </div>
+                        
+                        <div class="info-box">
+                            <div class="info-label">Reference</div>
+                            <div class="info-value-small">[REFERENCE]</div>
+                        </div>
+                        
+                        <div class="details-text">
+                            Transaction ID: [TRANSACTION_ID]<br>
+                            Processed: [DATE] [TIME]
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            
+            <!-- Footer -->
+            <tr>
+                <td class="footer">
+                    <div class="footer-links">
+                        <a href="https://www.anz.co.nz/personal/privacy/" target="_blank">Privacy Statement</a>
+                        <a href="https://www.anz.co.nz/personal/terms-and-conditions/" target="_blank">Website Terms of Use</a>
+                        <a href="https://www.anz.co.nz/personal/contact-us/" target="_blank">Contact Us</a>
+                    </div>
+                    <div class="footer-copyright">
+                        Copyright 2026 © ANZ New Zealand Limited. All rights reserved.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
