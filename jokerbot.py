@@ -74,6 +74,8 @@ def test_smtp(server: dict) -> bool:
         try:
             if use_ssl:
                 ctx  = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
                 conn = smtplib.SMTP_SSL(server["host"], port, timeout=10, context=ctx)
             else:
                 conn = smtplib.SMTP(server["host"], port, timeout=10)
@@ -237,11 +239,98 @@ def format_template_name(filename: str) -> str:
 # TEMPLATE LOADING
 # ═══════════════════════════════════════════
 
+COUNTRY_FLAGS = {
+    "australia":     "🇦🇺",
+    "new zealand":   "🇳🇿",
+    "usa":           "🇺🇸",
+    "united states": "🇺🇸",
+    "uk":            "🇬🇧",
+    "united kingdom":"🇬🇧",
+    "canada":        "🇨🇦",
+    "germany":       "🇩🇪",
+    "france":        "🇫🇷",
+    "italy":         "🇮🇹",
+    "spain":         "🇪🇸",
+    "netherlands":   "🇳🇱",
+    "singapore":     "🇸🇬",
+    "hong kong":     "🇭🇰",
+    "japan":         "🇯🇵",
+    "china":         "🇨🇳",
+    "india":         "🇮🇳",
+    "brazil":        "🇧🇷",
+    "mexico":        "🇲🇽",
+    "south africa":  "🇿🇦",
+    "uae":           "🇦🇪",
+    "switzerland":   "🇨🇭",
+    "sweden":        "🇸🇪",
+    "norway":        "🇳🇴",
+    "denmark":       "🇩🇰",
+    "ireland":       "🇮🇪",
+    "portugal":      "🇵🇹",
+    "poland":        "🇵🇱",
+    "turkey":        "🇹🇷",
+    "saudi arabia":  "🇸🇦",
+    "pakistan":      "🇵🇰",
+    "malaysia":      "🇲🇾",
+    "philippines":   "🇵🇭",
+    "indonesia":     "🇮🇩",
+    "thailand":      "🇹🇭",
+    "south korea":   "🇰🇷",
+    "nigeria":       "🇳🇬",
+    "kenya":         "🇰🇪",
+    "ghana":         "🇬🇭",
+    "egypt":         "🇪🇬",
+}
+
+AUTHORITY_FLAGS = {
+    "afp":        "🇦🇺",
+    "ato":        "🇦🇺",
+    "mygovid":    "🇦🇺",
+    "mygov":      "🇦🇺",
+    "services australia": "🇦🇺",
+    "centrelink": "🇦🇺",
+    "medicare":   "🇦🇺",
+    "asic":       "🇦🇺",
+    "accc":       "🇦🇺",
+    "nzta":       "🇳🇿",
+    "ird":        "🇳🇿",
+    "police":     "🏛️",
+    "irs":        "🇺🇸",
+    "fbi":        "🇺🇸",
+    "hmrc":       "🇬🇧",
+    "dvla":       "🇬🇧",
+    "google":     "🔵",
+    "microsoft":  "🔷",
+    "apple":      "🍎",
+    "meta":       "🔵",
+    "amazon":     "📦",
+    "netflix":    "🔴",
+    "paypal":     "💙",
+    "ebay":       "🛒",
+    "uber":       "⚫",
+    "airbnb":     "🏠",
+}
+
+def get_country_flag(name: str) -> str:
+    n = name.lower().strip()
+    for key, flag in COUNTRY_FLAGS.items():
+        if key in n or n in key:
+            return flag
+    return "🏳️"
+
+def get_authority_flag(name: str) -> str:
+    n = name.lower().strip()
+    for key, flag in AUTHORITY_FLAGS.items():
+        if key in n or n in key:
+            return flag
+    return "🏛️"
+
 def load_templates_from_files():
     templates = {
         "BANKS":     {"display_name": "🏦 BANKS",     "countries": {}},
         "CRYPTO":    {"display_name": "🪙 CRYPTO",    "types": {}},
         "AUTHORITY": {"display_name": "🏛️ AUTHORITY", "items": {}},
+        "TECH":      {"display_name": "💻 TECH",      "items": {}},
     }
 
     def load_file(f):
@@ -264,9 +353,7 @@ def load_templates_from_files():
         for country_folder in banks_path.iterdir():
             if not country_folder.is_dir(): continue
             cn    = country_folder.name
-            emoji = ("🇳🇿" if "New Zealand" in cn else
-                     "🇺🇸" if "USA"         in cn else
-                     "🇬🇧" if "UK"          in cn else "🇦🇺")
+            emoji = get_country_flag(cn)
             templates["BANKS"]["countries"].setdefault(cn, {"emoji": emoji, "items": {}})
             for bank_folder in country_folder.iterdir():
                 if not bank_folder.is_dir(): continue
@@ -299,12 +386,24 @@ def load_templates_from_files():
         for svc_folder in auth_path.iterdir():
             if not svc_folder.is_dir(): continue
             sn = svc_folder.name
-            templates["AUTHORITY"]["items"].setdefault(sn, {"templates": []})
+            templates["AUTHORITY"]["items"].setdefault(sn, {"templates": [], "emoji": get_authority_flag(sn)})
             for tf in svc_folder.glob("*"):
                 if tf.is_file() and tf.suffix in ('.json', '.html', '.txt'):
                     t = load_file(tf)
                     if t and t.get('body'):
                         templates["AUTHORITY"]["items"][sn]["templates"].append(t)
+
+    tech_path = TEMPLATES_DIR / "tech"
+    if tech_path.exists():
+        for svc_folder in tech_path.iterdir():
+            if not svc_folder.is_dir(): continue
+            sn = svc_folder.name
+            templates["TECH"]["items"].setdefault(sn, {"templates": [], "emoji": get_authority_flag(sn)})
+            for tf in svc_folder.glob("*"):
+                if tf.is_file() and tf.suffix in ('.json', '.html', '.txt'):
+                    t = load_file(tf)
+                    if t and t.get('body'):
+                        templates["TECH"]["items"][sn]["templates"].append(t)
 
     return templates
 
@@ -324,7 +423,7 @@ def find_template(template_id: str):
                 for itd in td["items"].values():
                     for t in itd["templates"]:
                         if t['id'] == template_id: return t
-        elif cat_key == "AUTHORITY":
+        elif cat_key in ("AUTHORITY", "TECH"):
             for itd in cat["items"].values():
                 for t in itd["templates"]:
                     if t['id'] == template_id: return t
@@ -667,6 +766,13 @@ async def show_categories(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🏛️ Authority  ·  {sc} services  ·  {tc} templates",
             callback_data="cat_AUTHORITY")])
 
+    if TEMPLATES["TECH"]["items"]:
+        sc = len(TEMPLATES["TECH"]["items"])
+        tc = sum(len(i.get("templates", [])) for i in TEMPLATES["TECH"]["items"].values())
+        kb.append([InlineKeyboardButton(
+            f"💻 Tech  ·  {sc} services  ·  {tc} templates",
+            callback_data="cat_TECH")])
+
     kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer")])
     await update.callback_query.edit_message_text(
         f"{JM}"
@@ -753,8 +859,22 @@ async def show_items(update: Update, context: ContextTypes.DEFAULT_TYPE,
         for name, idata in TEMPLATES["AUTHORITY"]["items"].items():
             n = len(idata["templates"])
             if n:
-                kb.append([InlineKeyboardButton(f"🏛️ {name}  ·  {n} templates",
+                flag = idata.get("emoji", "🏛️")
+                kb.append([InlineKeyboardButton(f"{flag} {name}  ·  {n} templates",
                                                 callback_data=f"item_AUTHORITY_{name}")])
+        kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer_templates")])
+
+    elif category == "TECH":
+        header_text = (
+            f"{JM}"
+            "💻 *Tech* — pick a service:"
+        )
+        for name, idata in TEMPLATES["TECH"]["items"].items():
+            n = len(idata["templates"])
+            if n:
+                flag = idata.get("emoji", "💻")
+                kb.append([InlineKeyboardButton(f"{flag} {name}  ·  {n} templates",
+                                                callback_data=f"item_TECH_{name}")])
         kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer_templates")])
 
     elif category == "CRYPTO" and crypto_type:
@@ -800,8 +920,17 @@ async def show_templates(update: Update, context: ContextTypes.DEFAULT_TYPE,
         svc       = data.replace("item_AUTHORITY_", "")
         context.user_data['current_item'] = svc
         templates = TEMPLATES["AUTHORITY"]["items"][svc]["templates"]
-        header    = f"🏛️ *{md_safe(svc)}*"
+        flag      = TEMPLATES["AUTHORITY"]["items"][svc].get("emoji", "🏛️")
+        header    = f"{flag} *{md_safe(svc)}*"
         back_cb   = "cat_AUTHORITY"
+
+    elif data.startswith("item_TECH_"):
+        svc       = data.replace("item_TECH_", "")
+        context.user_data['current_item'] = svc
+        templates = TEMPLATES["TECH"]["items"][svc]["templates"]
+        flag      = TEMPLATES["TECH"]["items"][svc].get("emoji", "💻")
+        header    = f"{flag} *{md_safe(svc)}*"
+        back_cb   = "cat_TECH"
 
     elif data.startswith("item_CRYPTO_"):
         parts       = data.replace("item_CRYPTO_", "").split("_", 1)
@@ -1019,6 +1148,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await show_bank_countries(update, context)
     elif d == "cat_CRYPTO":
         await show_crypto_types(update, context)
+    elif d == "cat_TECH":
+        await show_items(update, context)
     elif d.startswith("cat_"):
         await show_items(update, context)
     elif d.startswith("country_"):
@@ -1146,6 +1277,8 @@ def _try_send_via(srv: dict, msg) -> None:
         try:
             if use_ssl:
                 ctx  = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
                 conn = smtplib.SMTP_SSL(srv["host"], port, timeout=30, context=ctx)
             else:
                 conn = smtplib.SMTP(srv["host"], port, timeout=30)
@@ -1536,7 +1669,7 @@ def main():
             total += sum(len(i.get("templates", []))
                          for td in cat["types"].values()
                          for i in td["items"].values())
-        elif cat_key == "AUTHORITY":
+        elif cat_key in ("AUTHORITY", "TECH"):
             total += sum(len(i.get("templates", [])) for i in cat["items"].values())
 
     logger.info(f"✅ Loaded {total} templates — invite-only mode active")
