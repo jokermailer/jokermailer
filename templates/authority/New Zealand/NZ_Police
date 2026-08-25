@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification of Assigned Investigating Officer - Case File [CASE_FILE_NUMBER]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            line-height: 1.5;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .gmail-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+        }
+        
+        /* Email content */
+        .email-content {
+            padding: 32px 60px;
+            background-color: #fff;
+        }
+        
+        .police-header {
+            background: linear-gradient(to right, #0a1a40 0%, #0f2555 100%);
+            padding: 40px;
+            text-align: center;
+            margin: -32px -60px 32px -60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .police-logo {
+            max-height: 80px;
+            display: inline-block;
+        }
+        
+        .police-logo img {
+            max-height: 80px;
+            width: auto;
+        }
+        
+        
+        .content-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #0a1a40;
+            margin-bottom: 24px;
+            margin-top: 24px;
+        }
+        
+        .content-paragraph {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #333;
+            margin-bottom: 16px;
+        }
+        
+        .content-subheading {
+            font-size: 15px;
+            font-weight: 500;
+            color: #0a1a40;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .content-list {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .content-list li {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        
+        .content-closing {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e8e8e8;
+        }
+        
+        .closing-salutation {
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .closing-signature {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 32px;
+        }
+        
+        /* Government Footer */
+        .government-footer {
+            background: linear-gradient(to right, #0a1a40 0%, #0f2555 100%);
+            padding: 32px 40px;
+            text-align: left;
+            color: #999;
+            font-size: 12px;
+            margin-top: 32px;
+            margin-left: -60px;
+            margin-right: -60px;
+            margin-bottom: -32px;
+        }
+        
+        .government-footer-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .government-footer-logo-img {
+            height: 40px;
+            width: auto;
+            flex-shrink: 0;
+        }
+        
+        .government-footer-text {
+            color: #ccc;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .email-content {
+                padding: 24px 20px;
+            }
+            
+            .police-header {
+                margin: -24px -20px 24px -20px;
+                padding: 20px;
+            }
+            
+            .gmail-sender-info {
+                flex-direction: column;
+            }
+            
+            .gmail-timestamp {
+                text-align: left;
+            }
+            
+            .agency-logos {
+                justify-content: center;
+            }
+            
+            .government-footer {
+                margin-left: -20px;
+                margin-right: -20px;
+                margin-bottom: -24px;
+                padding: 20px;
+            }
+            
+            .government-footer-logo-img {
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gmail-container">
+        <!-- Email Content -->
+        <div class="email-content">
+            <!-- Police Header with Logo -->
+            <div class="police-header">
+                <div class="police-logo">
+                    <img src="https://www.police.govt.nz/themes/custom/bs_barrio_police/images/logo--print.png" alt="New Zealand Police Logo">
+                </div>
+            </div>
+            
+            <!-- Main Title -->
+            <h1 class="content-title">Verification of Assigned Investigating Officer – Case File [CASE_FILE_NUMBER]</h1>
+            
+            <!-- Body Content -->
+            <p class="content-paragraph">This correspondence formally confirms that [OFFICER_NAME] is a sworn member of the New Zealand Police and is duly authorised to act on behalf of the New Zealand Police in relation to Case File [CASE_FILE_NUMBER].</p>
+            
+            <p class="content-paragraph">In accordance with New Zealand Police policies and procedures, [OFFICER_NAME] has been appointed as the investigating officer for this matter and is authorised to liaise with you as the primary point of contact.</p>
+            
+            <div class="content-subheading">The assigned officer is authorised to:</div>
+            <ul class="content-list">
+                <li>Act as the nominated point of contact for matters relating to this investigation</li>
+                <li>Request, receive, and assess information relevant to the investigation</li>
+                <li>Provide updates regarding the status and progress of the case, where appropriate</li>
+                <li>Conduct enquiries and investigative actions in relation to this matter</li>
+                <li>Respond to questions and provide information as the investigation progresses, subject to legislative and operational constraints</li>
+            </ul>
+            
+            <p class="content-paragraph">This verification applies solely to Case File [CASE_FILE_NUMBER] and the officer named above. Please ensure that the officer's name and case file number correspond with the details provided by the individual with whom you are communicating.</p>
+            
+            <p class="content-paragraph">The New Zealand Police appreciate your cooperation in this matter.</p>
+            
+            <!-- Closing -->
+            <div class="content-closing">
+                <div class="closing-salutation">Yours faithfully,</div>
+                <div class="closing-signature">New Zealand Police</div>
+            </div>
+        </div>
+        
+        <!-- Government Footer -->
+        <div class="government-footer">
+            <div class="government-footer-content">
+                <img src="https://designsystem.education.govt.nz/themes/custom/design_system_theme/assets/images/NZGovt-logo-compact-white.png" alt="New Zealand Government" class="government-footer-logo-img">
+                <div class="government-footer-text">New Zealand Government</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
