@@ -314,12 +314,15 @@ def load_templates_from_files():
         for svc_folder in email_path.iterdir():
             if not svc_folder.is_dir(): continue
             sn = svc_folder.name
-            templates["EMAIL"]["items"].setdefault(sn, {"templates": []})
+            templates["EMAIL"]["items"].setdefault(sn, {"templates": [], "emoji": "📧"})
             for tf in svc_folder.glob("*"):
                 if tf.is_file() and tf.suffix in ('.json', '.html', '.txt'):
                     t = load_file(tf)
                     if t and t.get('body'):
                         templates["EMAIL"]["items"][sn]["templates"].append(t)
+                        logger.info(f"✅ Loaded EMAIL template: {sn}/{tf.name}")
+            if templates["EMAIL"]["items"][sn]["templates"]:
+                logger.info(f"📧 EMAIL service loaded: {sn} ({len(templates['EMAIL']['items'][sn]['templates'])} templates)")
 
     return templates
 
@@ -845,11 +848,17 @@ async def show_items(update: Update, context: ContextTypes.DEFAULT_TYPE,
             f"{JM}"
             "📧 *Email* — pick a service:"
         )
-        for name, idata in TEMPLATES["EMAIL"]["items"].items():
-            n = len(idata["templates"])
+        email_items = TEMPLATES.get("EMAIL", {}).get("items", {})
+        
+        if not email_items:
+            header_text += "\n\n❌ No email services found.\n\nMake sure templates are in:\n`templates/email/google/`"
+        
+        for name, idata in email_items.items():
+            n = len(idata.get("templates", []))
             if n:
                 kb.append([InlineKeyboardButton(f"📧 {name}  ·  {n} templates",
                                                 callback_data=f"item_EMAIL_{name}")])
+        
         kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer_templates")])
 
     elif category == "CRYPTO" and crypto_type:
@@ -1070,6 +1079,8 @@ async def show_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
     kb = []
     for key, config in SENDER_CONFIGS.items():
         kb.append([InlineKeyboardButton(config['display'], callback_data=f"sender_{key}")])
+    
+    kb.append([InlineKeyboardButton("✏️  Custom Sender Details", callback_data="custom_sender")])
     kb.append([InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")])
 
     await query.edit_message_text(
@@ -1077,7 +1088,7 @@ async def show_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "✍️ *Custom Email*\n\n"
         f"{JM_DIV}\n"
         "*Step 1 of 6 · Select Sender*\n"
-        "Choose the organization sending this email:",
+        "Choose the organization or enter custom details:",
         reply_markup=InlineKeyboardMarkup(kb),
         parse_mode='Markdown')
 
@@ -1181,6 +1192,24 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ── SENDER SELECTION ──
     elif d.startswith("sender_"):
         await handle_sender_selection(update, context)
+    
+    # ── CUSTOM SENDER ──
+    elif d == "custom_sender":
+        query = update.callback_query
+        context.user_data['custom_email_mode'] = True
+        context.user_data['email_step'] = 'custom_sender_name'
+        context.user_data['awaiting_email'] = True
+        await query.edit_message_text(
+            f"{JM}"
+            "✍️ *Custom Email*\n\n"
+            f"{JM_DIV}\n"
+            "*Step 1 of 6 · Sender Name*\n"
+            "What name should appear as the sender?\n"
+            "e.g. `ANZ Security Team`",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+            ]),
+            parse_mode='Markdown')
 
     # ── CONFIRM: send ──
     elif d == "confirm_send":
@@ -1203,14 +1232,15 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         kb = []
         for key, config in SENDER_CONFIGS.items():
             kb.append([InlineKeyboardButton(config['display'], callback_data=f"sender_{key}")])
+        kb.append([InlineKeyboardButton("✏️  Custom Sender Details", callback_data="custom_sender")])
         kb.append([InlineKeyboardButton("❌  Cancel", callback_data="cancel_edit")])
         
         await query.edit_message_text(
             f"{JM}"
             "✍️ *Custom Email — Edit*\n\n"
             f"{JM_DIV}\n"
-            "*Step 1 of 6 · Select Sender*\n"
-            "Choose the organization sending this email:",
+            "*Step 1 of 7 · Select Sender*\n"
+            "Choose the organization or enter custom details:",
             reply_markup=InlineKeyboardMarkup(kb),
             parse_mode='Markdown')
 
@@ -1501,11 +1531,46 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     # ── EMAIL STEPS ──
 
-    if step == 'recipient':
+    if step == 'custom_sender_name':
+        context.user_data['sender_name'] = text
+        context.user_data['email_step'] = 'custom_sender_email'
+        await update.message.reply_text(
+            f"{JM}"
+            "*Step 2 of 6 · Sender Email*\n"
+            "What email address should appear as the sender?\n"
+            "e.g. `noreply@anz` or `security@bank.com`",
+            reply_markup=cancel_kb, parse_mode='Markdown')
+
+    elif step == 'custom_sender_email':
+        ok, msg = validate_sender_email(text)
+        if not ok:
+            await update.message.reply_text(
+                f"{JM}❌ {msg}",
+                reply_markup=cancel_kb, parse_mode='Markdown')
+            return
+        context.user_data['sender_email'] = text
+        context.user_data['email_step'] = 'custom_sender_replyto'
+        await update.message.reply_text(
+            f"{JM}"
+            "*Step 3 of 6 · Reply-To Email*\n"
+            "Where should replies go?\n"
+            "e.g. `noreply@anz.co.nz`",
+            reply_markup=cancel_kb, parse_mode='Markdown')
+
+    elif step == 'custom_sender_replyto':
+        context.user_data['reply_to_email'] = text
+        context.user_data['email_step'] = 'recipient'
+        await update.message.reply_text(
+            f"{JM}"
+            "*Step 4 of 6 · Recipient*\n"
+            "Who is this email going to?",
+            reply_markup=cancel_kb, parse_mode='Markdown')
+
+    elif step == 'recipient':
         context.user_data['email_recipient'] = text
         context.user_data['email_step']      = 'subject'
         is_custom = context.user_data.get('custom_email_mode')
-        step_label = "Step 3 of 6" if is_custom else "Step 3 of 4"
+        step_label = "Step 5 of 7" if is_custom else "Step 3 of 4"
         await update.message.reply_text(
             f"{JM}"
             f"*{step_label} · Subject line*\n"
@@ -1520,7 +1585,7 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
             context.user_data['email_step'] = 'custom_body'
             await update.message.reply_text(
                 f"{JM}"
-                "*Step 4 of 6 · Email body*\n\n"
+                "*Step 6 of 7 · Email body*\n\n"
                 "Type the full email body below.\n"
                 "_You can use plain text or HTML._",
                 reply_markup=InlineKeyboardMarkup([
