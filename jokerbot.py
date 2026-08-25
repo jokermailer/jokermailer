@@ -244,7 +244,7 @@ def load_templates_from_files():
         "BANKS":     {"display_name": "🏦 BANKS",     "countries": {}},
         "CRYPTO":    {"display_name": "🪙 CRYPTO",    "types": {}},
         "AUTHORITY": {"display_name": "🏛️ AUTHORITY", "items": {}},
-        "EMAIL":     {"display_name": "📧 EMAIL",     "items": {}},  # ← NEW
+        "EMAIL":     {"display_name": "📧 EMAIL",     "items": {}},
     }
 
     def load_file(f):
@@ -309,7 +309,7 @@ def load_templates_from_files():
                     if t and t.get('body'):
                         templates["AUTHORITY"]["items"][sn]["templates"].append(t)
 
-    # ── EMAIL category: templates/email/<provider>/<files> ──
+    # ── EMAIL: templates/email/<provider>/<files> ──
     email_path = TEMPLATES_DIR / "email"
     if email_path.exists():
         for svc_folder in email_path.iterdir():
@@ -321,11 +321,77 @@ def load_templates_from_files():
                     t = load_file(tf)
                     if t and t.get('body'):
                         templates["EMAIL"]["items"][sn]["templates"].append(t)
+                        logger.info(f"✅ Loaded EMAIL template: {sn}/{tf.name}")
+            if templates["EMAIL"]["items"][sn]["templates"]:
+                logger.info(f"📧 EMAIL provider loaded: {sn} "
+                            f"({len(templates['EMAIL']['items'][sn]['templates'])} templates)")
 
     return templates
 
 
 TEMPLATES = load_templates_from_files()
+
+
+# ═══════════════════════════════════════════
+# SENDER CONFIGS — pre-configured organizations
+# ═══════════════════════════════════════════
+
+SENDER_CONFIGS = {
+    "AFP": {
+        "display": "🇦🇺 Australian Federal Police",
+        "sender_name": "Australian Federal Police",
+        "sender_email": "noreply@afp",
+        "reply_to_email": "noreply@afp.gov.au"
+    },
+    "ANZ": {
+        "display": "🏦 ANZ Bank",
+        "sender_name": "ANZ",
+        "sender_email": "noreply@anz",
+        "reply_to_email": "noreply@anz.co.nz"
+    },
+    "NZ_POLICE": {
+        "display": "🇳🇿 NZ Police",
+        "sender_name": "NZ Police",
+        "sender_email": "noreply@police",
+        "reply_to_email": "noreply@police.govt.nz"
+    },
+    "UK_POLICE": {
+        "display": "🇬🇧 UK Police (NPCC)",
+        "sender_name": "UK Police",
+        "sender_email": "noreply@npcc.police",
+        "reply_to_email": "info@npcc.police.uk"
+    },
+    "WESTPAC": {
+        "display": "🏦 Westpac NZ",
+        "sender_name": "Westpac",
+        "sender_email": "noreply@westpac",
+        "reply_to_email": "noreply@westpac.co.nz"
+    },
+    "BNZ": {
+        "display": "🏦 BNZ (Bank of New Zealand)",
+        "sender_name": "BNZ",
+        "sender_email": "noreply@bnz",
+        "reply_to_email": "noreply@bnz.co.nz"
+    },
+    "ASB": {
+        "display": "🏦 ASB Bank",
+        "sender_name": "ASB",
+        "sender_email": "noreply@asb",
+        "reply_to_email": "noreply@asb.co.nz"
+    },
+    "KIWIBANK": {
+        "display": "🏦 Kiwibank",
+        "sender_name": "Kiwibank",
+        "sender_email": "noreply@kiwibank",
+        "reply_to_email": "noreply@kiwibank.co.nz"
+    },
+    "GOOGLE": {
+        "display": "🔵 Google",
+        "sender_name": "Google",
+        "sender_email": "noreply@google",
+        "reply_to_email": "support-noreply@google.com"
+    },
+}
 
 
 def find_template(template_id: str):
@@ -340,7 +406,7 @@ def find_template(template_id: str):
                 for itd in td["items"].values():
                     for t in itd["templates"]:
                         if t['id'] == template_id: return t
-        elif cat_key in ("AUTHORITY", "EMAIL"):  # ← EMAIL added
+        elif cat_key in ("AUTHORITY", "EMAIL"):
             for itd in cat["items"].values():
                 for t in itd["templates"]:
                     if t['id'] == template_id: return t
@@ -397,6 +463,21 @@ def cancel_email_flow(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 # ═══════════════════════════════════════════
+# SENDER PICKER — shared by template & custom flows
+# ═══════════════════════════════════════════
+
+def _sender_kb(cancel_cb: str, include_custom: bool = False) -> InlineKeyboardMarkup:
+    """Build the sender-selection keyboard."""
+    kb = []
+    for key, cfg in SENDER_CONFIGS.items():
+        kb.append([InlineKeyboardButton(cfg['display'], callback_data=f"sender_{key}")])
+    if include_custom:
+        kb.append([InlineKeyboardButton("✏️  Custom Sender Details", callback_data="custom_sender")])
+    kb.append([InlineKeyboardButton("❌  Cancel", callback_data=cancel_cb)])
+    return InlineKeyboardMarkup(kb)
+
+
+# ═══════════════════════════════════════════
 # CONFIRM SCREEN
 # ═══════════════════════════════════════════
 
@@ -419,9 +500,8 @@ async def show_confirm_screen(update: Update, context: ContextTypes.DEFAULT_TYPE
     filled = cd.get('filled_vars', {})
     extra_block = ""
     if cd.get('custom_email_mode'):
-        # Show a preview of the custom body
-        raw_body  = cd.get('email_body', '')
-        preview   = raw_body[:200].strip()
+        raw_body = cd.get('email_body', '')
+        preview  = raw_body[:200].strip()
         if len(raw_body) > 200:
             preview += "…"
         extra_block = f"\n\n📝 *Body preview:*\n`{md_safe(preview)}`"
@@ -429,7 +509,6 @@ async def show_confirm_screen(update: Update, context: ContextTypes.DEFAULT_TYPE
         vars_lines  = "\n".join(f"  `{md_safe(k)}` → `{md_safe(v)}`" for k, v in filled.items())
         extra_block = f"\n\n📝 *Placeholders filled:*\n{vars_lines}"
 
-    # cancel goes back to mailer hub for custom email, template detail otherwise
     cancel_cb = "cancel_custom_email" if cd.get('custom_email_mode') else f"cancel_email_{template_id}"
     edit_cb   = "confirm_edit_custom" if cd.get('custom_email_mode') else f"confirm_edit_{template_id}"
 
@@ -492,8 +571,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "1️⃣  Tap *📧 Mailer* below\n"
         "2️⃣  Choose *🏦 Banks*, *🪙 Crypto*, *🏛️ Authority* or *📧 Email*\n"
         "3️⃣  Pick a template and preview it\n"
-        "4️⃣  Tap *Send Email* and fill in each step\n"
-        "5️⃣  Fill in any template placeholders\n"
+        "4️⃣  Tap *Send Email* — choose a pre-set sender\n"
+        "5️⃣  Fill in recipient, subject & any placeholders\n"
         "6️⃣  *Review all details* on the confirm screen\n"
         "7️⃣  Tap *Send Now* — done ✅\n\n"
         "⭐ Star any template to save it in *Favourites*\n\n"
@@ -683,7 +762,6 @@ async def show_categories(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🏛️ Authority  ·  {sc} services  ·  {tc} templates",
             callback_data="cat_AUTHORITY")])
 
-    # ── EMAIL category button ──
     if TEMPLATES["EMAIL"]["items"]:
         sc = len(TEMPLATES["EMAIL"]["items"])
         tc = sum(len(i.get("templates", [])) for i in TEMPLATES["EMAIL"]["items"].values())
@@ -781,7 +859,6 @@ async def show_items(update: Update, context: ContextTypes.DEFAULT_TYPE,
                                                 callback_data=f"item_AUTHORITY_{name}")])
         kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer_templates")])
 
-    # ── EMAIL category items ──
     elif category == "EMAIL":
         header_text = (
             f"{JM}"
@@ -840,7 +917,6 @@ async def show_templates(update: Update, context: ContextTypes.DEFAULT_TYPE,
         header    = f"🏛️ *{md_safe(svc)}*"
         back_cb   = "cat_AUTHORITY"
 
-    # ── EMAIL template list ──
     elif data.startswith("item_EMAIL_"):
         svc       = data.replace("item_EMAIL_", "")
         context.user_data['current_item'] = svc
@@ -968,16 +1044,17 @@ async def show_favorites(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ═══════════════════════════════════════════
-# EMAIL FLOW — START
+# EMAIL FLOW — START (template)
 # ═══════════════════════════════════════════
 
 async def send_email_from_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Tap Send Email on a template → pick a pre-configured sender."""
     query       = update.callback_query
     template_id = query.data.replace("send_template_", "")
     template    = find_template(template_id)
 
     context.user_data['selected_template_id'] = template_id
-    context.user_data['email_step']           = 'sender_name'
+    context.user_data['email_step']           = 'select_sender'
     context.user_data['awaiting_email']       = True
 
     name = template['name'] if template and template['name'] else template_id
@@ -986,11 +1063,9 @@ async def send_email_from_template(update: Update, context: ContextTypes.DEFAULT
         f"{JM}"
         f"✉️ *Send — {md_safe(name)}*\n\n"
         f"{JM_DIV}\n"
-        "*Step 1 of 5 · Sender name*\n"
-        "e.g. `ANZ Security Team`",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("❌  Cancel", callback_data=f"cancel_email_{template_id}")]
-        ]),
+        "*Step 1 of 3 · Select Sender*\n"
+        "Choose the organisation sending this email:",
+        reply_markup=_sender_kb(f"cancel_email_{template_id}"),
         parse_mode='Markdown')
 
 
@@ -999,22 +1074,55 @@ async def send_email_from_template(update: Update, context: ContextTypes.DEFAULT
 # ═══════════════════════════════════════════
 
 async def show_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Start the custom email flow — user writes their own body."""
+    """Custom email: pick sender (pre-set or manual) then type body."""
     query = update.callback_query
-    cancel_email_flow(context)  # clear any previous state
+    cancel_email_flow(context)
 
     context.user_data['custom_email_mode'] = True
-    context.user_data['email_step']        = 'sender_name'
+    context.user_data['email_step']        = 'select_sender'
     context.user_data['awaiting_email']    = True
 
     await query.edit_message_text(
         f"{JM}"
         "✍️ *Custom Email*\n\n"
         f"{JM_DIV}\n"
-        "*Step 1 of 6 · Sender name*\n"
-        "e.g. `ANZ Security Team`",
+        "*Step 1 of 5 · Select Sender*\n"
+        "Choose an organisation or enter custom sender details:",
+        reply_markup=_sender_kb("cancel_custom_email", include_custom=True),
+        parse_mode='Markdown')
+
+
+# ═══════════════════════════════════════════
+# SENDER SELECTION HANDLER
+# ═══════════════════════════════════════════
+
+async def handle_sender_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Pre-configured sender chosen → auto-fill and move to recipient."""
+    query      = update.callback_query
+    sender_key = query.data.replace("sender_", "")
+
+    if sender_key not in SENDER_CONFIGS:
+        await query.answer("Invalid sender", show_alert=True)
+        return
+
+    cfg = SENDER_CONFIGS[sender_key]
+    context.user_data['sender_name']    = cfg['sender_name']
+    context.user_data['sender_email']   = cfg['sender_email']
+    context.user_data['reply_to_email'] = cfg['reply_to_email']
+    context.user_data['email_step']     = 'recipient'
+
+    is_custom   = context.user_data.get('custom_email_mode', False)
+    template_id = context.user_data.get('selected_template_id', '')
+    cancel_cb   = "cancel_custom_email" if is_custom else f"cancel_email_{template_id}"
+    step_label  = "Step 2 of 5" if is_custom else "Step 2 of 3"
+
+    await query.edit_message_text(
+        f"{JM}"
+        f"*{step_label} · Recipient*\n"
+        "Who is this email going to?\n\n"
+        f"_Sending as:_ `{md_safe(cfg['sender_name'])}`",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+            [InlineKeyboardButton("❌  Cancel", callback_data=cancel_cb)]
         ]),
         parse_mode='Markdown')
 
@@ -1065,7 +1173,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif d == "cat_CRYPTO":
         await show_crypto_types(update, context)
     elif d.startswith("cat_"):
-        # Handles cat_AUTHORITY, cat_EMAIL, and any future categories
         await show_items(update, context)
     elif d.startswith("country_"):
         await show_items(update, context)
@@ -1081,46 +1188,61 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif d.startswith("send_template_"):
         await send_email_from_template(update, context)
 
+    # ── SENDER SELECTION ──
+    elif d.startswith("sender_"):
+        await handle_sender_selection(update, context)
+
+    # ── CUSTOM SENDER (manual entry) — only available from custom email ──
+    elif d == "custom_sender":
+        context.user_data['email_step']     = 'custom_sender_name'
+        context.user_data['awaiting_email'] = True
+        await query.edit_message_text(
+            f"{JM}"
+            "✍️ *Custom Email — Custom Sender*\n\n"
+            f"{JM_DIV}\n"
+            "*Sender Name*\n"
+            "e.g. `ANZ Security Team`",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+            ]),
+            parse_mode='Markdown')
+
     # ── CONFIRM: send ──
     elif d == "confirm_send":
         await do_send_email(update, context)
 
-    # ── CONFIRM: edit (restart from step 1) ──
+    # ── CONFIRM: edit ──
     elif d == "confirm_edit_custom":
-        # Snapshot current confirmed data before restarting
         context.user_data['edit_snapshot'] = {
             k: context.user_data.get(k)
-            for k in ['sender_name','sender_email','reply_to_email',
-                      'email_recipient','email_subject','email_body',
-                      'filled_vars','raw_body','custom_email_mode','selected_template_id']
+            for k in ['sender_name', 'sender_email', 'reply_to_email',
+                      'email_recipient', 'email_subject', 'email_body',
+                      'filled_vars', 'raw_body', 'custom_email_mode', 'selected_template_id']
         }
         cancel_email_flow(context)
         context.user_data['custom_email_mode'] = True
-        context.user_data['email_step']        = 'sender_name'
+        context.user_data['email_step']        = 'select_sender'
         context.user_data['awaiting_email']    = True
         await query.edit_message_text(
             f"{JM}"
             "✍️ *Custom Email — Edit*\n\n"
             f"{JM_DIV}\n"
-            "*Step 1 of 6 · Sender name*\n"
-            "e.g. `ANZ Security Team`",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_edit")]
-            ]),
+            "*Step 1 of 5 · Select Sender*\n"
+            "Choose an organisation or enter custom sender details:",
+            reply_markup=_sender_kb("cancel_edit", include_custom=True),
             parse_mode='Markdown')
 
     elif d.startswith("confirm_edit_"):
         template_id = d.replace("confirm_edit_", "")
-        # Snapshot current confirmed data before restarting
         context.user_data['edit_snapshot'] = {
             k: context.user_data.get(k)
-            for k in ['sender_name','sender_email','reply_to_email',
-                      'email_recipient','email_subject','email_body',
-                      'filled_vars','raw_body','custom_email_mode','selected_template_id']
+            for k in ['sender_name', 'sender_email', 'reply_to_email',
+                      'email_recipient', 'email_subject', 'email_body',
+                      'filled_vars', 'raw_body', 'custom_email_mode', 'selected_template_id']
         }
         cancel_email_flow(context)
         context.user_data['selected_template_id'] = template_id
-        context.user_data['email_step']           = 'sender_name'
+        context.user_data['email_step']           = 'select_sender'
         context.user_data['awaiting_email']       = True
         template = find_template(template_id)
         name     = template['name'] if template and template['name'] else template_id
@@ -1128,14 +1250,12 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{JM}"
             f"✏️ *Edit — {md_safe(name)}*\n\n"
             f"{JM_DIV}\n"
-            "*Step 1 of 5 · Sender name*\n"
-            "e.g. `ANZ Security Team`",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_edit")]
-            ]),
+            "*Step 1 of 3 · Select Sender*\n"
+            "Choose the organisation sending this email:",
+            reply_markup=_sender_kb("cancel_edit"),
             parse_mode='Markdown')
 
-    # ── CANCEL EDIT — restore snapshot and show confirm again ──
+    # ── CANCEL EDIT — restore snapshot ──
     elif d == "cancel_edit":
         snapshot = context.user_data.pop('edit_snapshot', None)
         cancel_email_flow(context)
@@ -1144,23 +1264,22 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.user_data['awaiting_email'] = True
             await show_confirm_screen(update, context)
         else:
-            # No snapshot (shouldn't happen) — fall back to menu
             await start(update, context)
 
-    # ── CANCEL CUSTOM EMAIL (back to mailer hub) ──
+    # ── CANCEL CUSTOM EMAIL ──
     elif d == "cancel_custom_email":
         context.user_data.pop('edit_snapshot', None)
         cancel_email_flow(context)
         await show_mailer_hub(update, context)
 
-    # ── CANCEL TEMPLATE EMAIL (back to template detail) ──
+    # ── CANCEL TEMPLATE EMAIL ──
     elif d.startswith("cancel_email_"):
         template_id = d.replace("cancel_email_", "")
         context.user_data.pop('edit_snapshot', None)
         cancel_email_flow(context)
         await view_template(update, context, template_id=template_id)
 
-    # ── BACK TO ITEM LIST (from template detail) ──
+    # ── BACK TO ITEM LIST ──
     elif d.startswith("back_to_item_"):
         back_cb = d.replace("back_to_item_", "")
         if back_cb.startswith("item_"):
@@ -1184,8 +1303,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ═══════════════════════════════════════════
 
 def _try_send_via(srv: dict, msg) -> None:
-    """Attempt to send a pre-built MIMEMultipart via one SMTP server.
-    Tries STARTTLS/587 first, then SSL/465. Raises on both failures."""
     last_err = None
     for port, use_ssl in [(587, False), (465, True)]:
         conn = None
@@ -1215,12 +1332,10 @@ def _try_send_via(srv: dict, msg) -> None:
 
 def send_email(recipient, subject, body,
                sender_name=None, sender_email=None, reply_to_email=None):
-    """Try each SMTP server in order (online ones first). Raises if all fail."""
     if not SMTP_SERVERS:
         raise Exception("No SMTP servers configured. Add SMTP_1_HOST/USER/PASS to .env")
 
     msg = MIMEMultipart('alternative')
-    # Use the first server's user as the technical From if needed
     fallback_from = SMTP_SERVERS[0]["user"] if SMTP_SERVERS else ""
     msg['From']    = (f"{sender_name} <{sender_email}>"
                       if sender_name and sender_email
@@ -1231,7 +1346,6 @@ def send_email(recipient, subject, body,
         msg['Reply-To'] = reply_to_email
     msg.attach(MIMEText(body, 'html'))
 
-    # Sort: online servers first, then offline (give them one more chance)
     ordered = sorted(SMTP_SERVERS, key=lambda s: (0 if s["online"] else 1))
     errors  = []
     for srv in ordered:
@@ -1247,11 +1361,9 @@ def send_email(recipient, subject, body,
 
 
 async def do_send_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Called from the ✅ Send Now button on the confirm screen."""
     query = update.callback_query
     cd    = context.user_data
 
-    # Build body if not already set (no-placeholder path)
     if 'email_body' not in cd:
         template = find_template(cd.get('selected_template_id', ''))
         cd['email_body'] = template['body'] if template else ''
@@ -1367,7 +1479,7 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     [InlineKeyboardButton("❌  Cancel", callback_data="admin_panel")]
                 ]),
                 parse_mode='Markdown')
-            return   # keep admin_step so they can retry
+            return
         context.user_data.pop('admin_step', None)
         return
 
@@ -1390,46 +1502,46 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
         [InlineKeyboardButton("❌  Cancel", callback_data=cancel_cb)]
     ])
 
-    # ── EMAIL STEPS ──
+    # ── CUSTOM SENDER manual entry steps ──
 
-    if step == 'sender_name':
+    if step == 'custom_sender_name':
         context.user_data['sender_name'] = text
-        context.user_data['email_step']  = 'sender_email'
+        context.user_data['email_step']  = 'custom_sender_email'
         await update.message.reply_text(
             f"{JM}"
-            "*Step 2 of 5 · Sender email*\n"
-            "e.g. `security@anz`",
+            "*Sender Email*\n"
+            "e.g. `noreply@google` or `security@bank.com`",
             reply_markup=cancel_kb, parse_mode='Markdown')
 
-    elif step == 'sender_email':
+    elif step == 'custom_sender_email':
         ok, msg = validate_sender_email(text)
         if not ok:
-            await update.message.reply_text(
-                f"{JM}❌ {msg}",
-                reply_markup=cancel_kb, parse_mode='Markdown')
+            await update.message.reply_text(f"{JM}❌ {msg}",
+                                            reply_markup=cancel_kb, parse_mode='Markdown')
             return
         context.user_data['sender_email'] = text
-        context.user_data['email_step']   = 'reply_to'
+        context.user_data['email_step']   = 'custom_sender_replyto'
         await update.message.reply_text(
             f"{JM}"
-            "*Step 3 of 5 · Reply-to email*\n"
-            "Where should replies go?",
+            "*Reply-To Email*\n"
+            "e.g. `noreply@google.com`",
             reply_markup=cancel_kb, parse_mode='Markdown')
 
-    elif step == 'reply_to':
+    elif step == 'custom_sender_replyto':
         context.user_data['reply_to_email'] = text
         context.user_data['email_step']     = 'recipient'
         await update.message.reply_text(
             f"{JM}"
-            "*Step 4 of 5 · Recipient*\n"
+            "*Recipient*\n"
             "Who is this email going to?",
             reply_markup=cancel_kb, parse_mode='Markdown')
+
+    # ── SHARED STEPS (used by both template & custom flows) ──
 
     elif step == 'recipient':
         context.user_data['email_recipient'] = text
         context.user_data['email_step']      = 'subject'
-        is_custom = context.user_data.get('custom_email_mode')
-        step_label = "Step 5 of 6" if is_custom else "Step 5 of 5"
+        step_label = "Step 3 of 5" if is_custom else "Step 3 of 3"
         await update.message.reply_text(
             f"{JM}"
             f"*{step_label} · Subject line*\n"
@@ -1440,11 +1552,11 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
         context.user_data['email_subject'] = text
 
         # Custom email — ask for body next
-        if context.user_data.get('custom_email_mode'):
+        if is_custom:
             context.user_data['email_step'] = 'custom_body'
             await update.message.reply_text(
                 f"{JM}"
-                "*Step 6 of 6 · Email body*\n\n"
+                "*Step 4 of 5 · Email body*\n\n"
                 "Either:\n"
                 "• Type your body below _(plain text or HTML)_\n"
                 "• Upload an *.html* file and it will be read automatically",
@@ -1454,8 +1566,8 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 parse_mode='Markdown')
             return
 
+        # Template flow — scan for placeholders
         template = find_template(template_id)
-
         if not template:
             await update.message.reply_text(
                 f"{JM}❌ Template not found.",
@@ -1491,17 +1603,14 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 f"Enter value for `{md_safe(unique[0])}`:",
                 reply_markup=cancel_kb, parse_mode='Markdown')
         else:
-            # No placeholders — body is ready, go straight to confirm
-            context.user_data['email_body'] = raw_body
+            context.user_data['email_body']  = raw_body
             context.user_data['filled_vars'] = {}
             await show_confirm_screen(update, context)
 
     elif step == 'custom_body':
-        # Body typed — store it and go straight to confirm
-        context.user_data['email_body']   = text
-        context.user_data['filled_vars']  = {}
+        context.user_data['email_body']  = text
+        context.user_data['filled_vars'] = {}
         await show_confirm_screen(update, context)
-        return
 
     elif step == 'fill_vars':
         pending = context.user_data['pending_vars']
@@ -1523,7 +1632,6 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await _build_body_and_confirm(update, context)
 
     else:
-        # Unknown / missing step — never leave the user hanging
         logger.warning(f"handle_text: unrecognised step={step!r} for user {user_id}")
         await update.message.reply_text(
             f"{JM}"
@@ -1552,50 +1660,47 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     doc = update.message.document if update.message else None
     if not doc:
-        return  # not a document message, ignore silently
+        return
 
     # Only active during the custom_body step
     if (not context.user_data.get('awaiting_email')
             or context.user_data.get('email_step') != 'custom_body'):
         await update.message.reply_text(
             f"{JM}"
-            "\u26a0\ufe0f *Not expecting a file right now.*\n\n"
+            "⚠️ *Not expecting a file right now.*\n\n"
             "Start a *Custom Email* flow first, then upload your HTML "
             "when asked for the body.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("\U0001f3e0  Menu", callback_data="back")]
+                [InlineKeyboardButton("🏠  Menu", callback_data="back")]
             ]),
             parse_mode='Markdown')
         return
 
-    fname = doc.file_name or ""
-    mime  = doc.mime_type or ""
+    fname   = doc.file_name or ""
+    mime    = doc.mime_type or ""
     is_html = fname.lower().endswith('.html') or 'html' in mime.lower()
 
     if not is_html:
         await update.message.reply_text(
             f"{JM}"
-            f"\u274c *Wrong file type:* `{md_safe(fname or mime)}`\n\n"
+            f"❌ *Wrong file type:* `{md_safe(fname or mime)}`\n\n"
             "Please upload a `.html` file, or type your body as text.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("\u274c  Cancel", callback_data="cancel_custom_email")]
+                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
 
     if doc.file_size and doc.file_size > 1_048_576:
         await update.message.reply_text(
-            f"{JM}\u274c File too large (max 1 MB). Please upload a smaller HTML file.",
+            f"{JM}❌ File too large (max 1 MB). Please upload a smaller HTML file.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("\u274c  Cancel", callback_data="cancel_custom_email")]
+                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
 
-    # Acknowledge immediately so the user knows something is happening
-    await update.message.reply_text(
-        f"{JM}\u23f3 Reading your HTML file\u2026",
-        parse_mode='Markdown')
+    await update.message.reply_text(f"{JM}⏳ Reading your HTML file…", parse_mode='Markdown')
 
     try:
         import io
@@ -1607,18 +1712,18 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"handle_document: download failed for user {user_id}: {e}", exc_info=True)
         await update.message.reply_text(
-            f"{JM}\u274c Could not read the file: `{md_safe(str(e))}`\n\nPlease try again.",
+            f"{JM}❌ Could not read the file: `{md_safe(str(e))}`\n\nPlease try again.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("\u274c  Cancel", callback_data="cancel_custom_email")]
+                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
 
     if not html_body.strip():
         await update.message.reply_text(
-            f"{JM}\u274c The file appears to be empty. Please upload a valid HTML file.",
+            f"{JM}❌ The file appears to be empty. Please upload a valid HTML file.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("\u274c  Cancel", callback_data="cancel_custom_email")]
+                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
             ]),
             parse_mode='Markdown')
         return
@@ -1629,14 +1734,14 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     plain   = html_to_text(html_body)
     preview = plain[:200].strip()
     if len(plain) > 200:
-        preview += "\u2026"
+        preview += "…"
 
     display_name = fname if fname else "uploaded file"
     await update.message.reply_text(
         f"{JM}"
-        f"\u2705 *Loaded:* `{md_safe(display_name)}`\n"
-        f"\U0001f4cf `{len(html_body):,}` bytes\n\n"
-        f"\U0001f4dd *Preview:*\n`{md_safe(preview)}`",
+        f"✅ *Loaded:* `{md_safe(display_name)}`\n"
+        f"📏 `{len(html_body):,}` bytes\n\n"
+        f"📝 *Preview:*\n`{md_safe(preview)}`",
         parse_mode='Markdown')
 
     await show_confirm_screen(update, context)
@@ -1646,15 +1751,15 @@ async def _build_body_and_confirm(update: Update, context: ContextTypes.DEFAULT_
     """Substitute all filled vars into the raw body then show the confirm screen."""
     body = context.user_data['raw_body']
     for var, val in context.user_data['filled_vars'].items():
-        body = body.replace(f"[{var}]",      val)
-        body = body.replace(f"{{{{{var}}}}}",  val)
-        body = body.replace(f"{{{var}}}",      val)
-        body = body.replace(f"${var}",         val)
-        body = re.sub(re.escape(f"[{var}]"),       val, body, flags=re.IGNORECASE)
-        body = re.sub(re.escape(f"{{{{{var}}}}}"),  val, body, flags=re.IGNORECASE)
+        body = body.replace(f"[{var}]",        val)
+        body = body.replace(f"{{{{{var}}}}}",   val)
+        body = body.replace(f"{{{var}}}",        val)
+        body = body.replace(f"${var}",           val)
+        body = re.sub(re.escape(f"[{var}]"),        val, body, flags=re.IGNORECASE)
+        body = re.sub(re.escape(f"{{{{{var}}}}}"),   val, body, flags=re.IGNORECASE)
         body = re.sub(r'(?<!\{)\{' + re.escape(var) + r'\}(?!\})',
                       val, body, flags=re.IGNORECASE)
-        body = re.sub(re.escape(f"${var}"),         val, body, flags=re.IGNORECASE)
+        body = re.sub(re.escape(f"${var}"),          val, body, flags=re.IGNORECASE)
     context.user_data['email_body'] = body
     await show_confirm_screen(update, context)
 
@@ -1678,10 +1783,7 @@ def main():
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_callback))
-    # Document handler MUST come before the text handler.
-    # python-telegram-bot dispatches handlers in registration order within
-    # the same group, and a document message will never match TEXT anyway,
-    # but being explicit avoids any edge-case ordering surprises.
+    # Document handler MUST come before the text handler
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     app.add_error_handler(error_handler)
@@ -1696,7 +1798,7 @@ def main():
             total += sum(len(i.get("templates", []))
                          for td in cat["types"].values()
                          for i in td["items"].values())
-        elif cat_key in ("AUTHORITY", "EMAIL"):  # ← EMAIL counted
+        elif cat_key in ("AUTHORITY", "EMAIL"):
             total += sum(len(i.get("templates", [])) for i in cat["items"].values())
 
     logger.info(f"✅ Loaded {total} templates — invite-only mode active")
