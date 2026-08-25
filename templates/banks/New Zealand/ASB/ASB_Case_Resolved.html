@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASB - Case Resolved</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Calibri, Helvetica, Arial, sans-serif; background-color: #e3e4ea; color: #333333; line-height: 1.5; }
+        .email-container { max-width: 580px; margin: 0 auto; background-color: #ffffff; }
+        .header { background-color: #ffffff; padding: 20px 30px; }
+        .header img { height: 38px; width: auto; display: block; }
+        .header-bar { background-color: #fcbd1b; height: 5px; }
+        .hero { padding: 28px 30px 24px; border-bottom: 1px solid #eeeeee; }
+        .hero-title { font-size: 20px; font-weight: 600; color: #111111; margin-bottom: 10px; }
+        .hero-subtitle { font-size: 14px; color: #666666; line-height: 1.6; }
+        .details { padding: 24px 30px 8px; }
+        .details-heading { font-size: 12px; font-weight: 700; color: #999999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+        .detail-row { display: flex; justify-content: space-between; align-items: baseline; padding: 13px 0; border-bottom: 1px solid #eeeeee; }
+        .detail-row:first-of-type { border-top: 1px solid #eeeeee; }
+        .detail-label { font-size: 13px; color: #888888; }
+        .detail-value { font-size: 14px; color: #111111; font-weight: 600; text-align: right; }
+        .detail-value-large { font-size: 22px; color: #111111; font-weight: 700; text-align: right; }
+        .notice { margin: 20px 30px 24px; background-color: #fffbf0; border: 1px solid #fcbd1b; border-radius: 4px; padding: 14px 16px; }
+        .notice p { font-size: 13px; color: #555555; line-height: 1.6; }
+        .notice p + p { margin-top: 8px; }
+        .footer-links { padding: 18px 30px; border-top: 1px solid #eeeeee; text-align: center; }
+        .footer-links a { font-size: 12px; color: #888888; text-decoration: none; padding: 0 10px; border-right: 1px solid #dddddd; }
+        .footer-links a:last-child { border-right: none; }
+        .footer-links a:hover { color: #333333; }
+        .footer-copyright { background-color: #e3e4ea; padding: 14px 0; text-align: center; }
+        .footer-copyright p { font-size: 11px; color: #999999; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="https://finance.co.nz/wp-content/uploads/2023/05/asb-logo.png" alt="ASB">
+        </div>
+        <div class="header-bar"></div>
+        <div class="hero">
+            <div class="hero-title">Your Case Has Been Resolved</div>
+            <div class="hero-subtitle">We're pleased to let you know your case has been successfully resolved. If a refund was approved, please allow 2–3 business days for the funds to appear in your account.</div>
+        </div>
+        <div class="details">
+            <div class="details-heading">Resolution Summary</div>
+            <div class="detail-row">
+                <span class="detail-label">Case ID</span>
+                <span class="detail-value">[CASE_ID]</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Outcome</span>
+                <span class="detail-value">[OUTCOME]</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Refund Amount</span>
+                <span class="detail-value-large">[AMOUNT]</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Credited To</span>
+                <span class="detail-value">[REFUND_METHOD]</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Estimated Arrival</span>
+                <span class="detail-value">2–3 Business Days</span>
+            </div>
+        </div>
+        <div class="notice">
+            <p>Thank you for banking with ASB. Your case is now closed. If you have any further questions, please don't hesitate to contact us.</p>
+            <p>Please do not share this email or your case details with anyone outside of ASB.</p>
+        </div>
+        <div class="footer-links">
+            <a href="https://www.asb.co.nz/manage-email-settings" target="_blank">Manage Email Settings</a>
+            <a href="https://www.asb.co.nz/termsandconditions" target="_blank">Terms and Conditions</a>
+            <a href="https://www.asb.co.nz/contact-us" target="_blank">Contact Us</a>
+        </div>
+        <div class="footer-copyright">
+            <p>&copy; ASB Bank Limited. 2026</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASB - Caller Check</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Calibri, Helvetica, Arial, 'Lucida Grande', sans-serif;
+            background-color: #e3e4ea;
+            color: #000001;
+            line-height: 1.4;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        /* Header */
+        .header {
+            background-color: #ffffff;
+            padding: 16px 25px;
+        }
+
+        .header img {
+            height: 40px;
+            width: auto;
+            display: block;
+        }
+
+        .header-bar {
+            background-color: #fcbd1b;
+            height: 6px;
+            width: 100%;
+        }
+
+        /* Hero */
+        .hero {
+            background-color: #ffffff;
+            padding: 30px 25px 10px 25px;
+            border-bottom: 1px solid #dddddd;
+        }
+
+        .hero-title {
+            font-size: 22px;
+            color: #000000;
+            line-height: 28px;
+            margin-bottom: 14px;
+            font-weight: 400;
+        }
+
+        .hero-divider {
+            width: 30px;
+            height: 2px;
+            background-color: #fcbd1b;
+            margin-bottom: 16px;
+        }
+
+        .hero-subtitle {
+            font-size: 15px;
+            color: #565656;
+            line-height: 20px;
+            margin-bottom: 24px;
+        }
+
+        /* Verification section */
+        .verification {
+            background-color: #ffffff;
+            padding: 24px 25px 10px 25px;
+        }
+
+        .verification-heading {
+            font-size: 21px;
+            font-weight: 700;
+            color: #555555;
+            margin-bottom: 20px;
+        }
+
+        /* Info rows */
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            margin-bottom: 0;
+            border-top: 1px solid #dddddd;
+        }
+
+        .info-row:last-of-type {
+            border-bottom: 1px solid #dddddd;
+            margin-bottom: 24px;
+        }
+
+        .info-row-number {
+            background-color: #fcbd1b;
+            color: #000000;
+            font-size: 14px;
+            font-weight: 700;
+            width: 40px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .info-row-content {
+            flex: 1;
+            padding: 14px 16px;
+        }
+
+        .info-row-label {
+            font-size: 11px;
+            color: #888888;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+
+        .info-row-value {
+            font-size: 16px;
+            color: #000000;
+            font-weight: 400;
+        }
+
+        /* Notice */
+        .notice {
+            background-color: #f7f7f8;
+            border-left: 4px solid #fcbd1b;
+            margin: 0 25px 16px 25px;
+            padding: 14px 16px;
+        }
+
+        .notice p {
+            font-size: 13px;
+            color: #565656;
+            line-height: 18px;
+            margin-bottom: 10px;
+        }
+
+        .notice p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Footer links */
+        .footer-links {
+            background-color: #ffffff;
+            padding: 20px 25px 16px;
+            border-top: 1px solid #dddddd;
+            text-align: center;
+        }
+
+        .footer-links a {
+            font-size: 13px;
+            color: #565656;
+            text-decoration: none;
+            padding: 0 12px;
+            display: inline-block;
+            border-right: 1px solid #cccccc;
+            line-height: 17px;
+        }
+
+        .footer-links a:last-child {
+            border-right: none;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Copyright */
+        .footer-copyright {
+            background-color: #e3e4ea;
+            padding: 0 0 18px 0;
+            text-align: center;
+        }
+
+        .footer-copyright p {
+            font-size: 12px;
+            color: #7b7d83;
+            line-height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+
+        <!-- Header -->
+        <div class="header">
+            <img src="https://finance.co.nz/wp-content/uploads/2023/05/asb-logo.png" alt="ASB">
+        </div>
+        <div class="header-bar"></div>
+
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-title">ASB Caller Check</div>
+            <div class="hero-divider"></div>
+            <div class="hero-subtitle">Verify the identity of the ASB representative currently in contact with you. If the details below do not match who you are speaking with, end the call immediately and contact ASB directly.</div>
+        </div>
+
+        <!-- Verification -->
+        <div class="verification">
+            <div class="verification-heading">Employee Verification</div>
+
+            <div class="info-row">
+                <div class="info-row-number">1</div>
+                <div class="info-row-content">
+                    <div class="info-row-label">Contacted By</div>
+                    <div class="info-row-value">[EMPLOYEE_NAME]</div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-row-number">2</div>
+                <div class="info-row-content">
+                    <div class="info-row-label">Case ID</div>
+                    <div class="info-row-value">[CASE_ID]</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notice -->
+        <div class="notice">
+            <p>The information above is provided to verify the authenticity of your case and the assigned representative. Please do not share this information with anyone.</p>
+            <p>If your call gets disconnected, this ticket number will be used to keep track of your issue.</p>
+        </div>
+
+        <!-- Footer links -->
+        <div class="footer-links">
+            <a href="https://www.asb.co.nz/manage-email-settings" target="_blank">Manage Email Settings</a>
+            <a href="https://www.asb.co.nz/termsandconditions" target="_blank">Terms and Conditions</a>
+            <a href="https://www.asb.co.nz/contact-us" target="_blank">Contact Us</a>
+        </div>
+
+        <!-- Copyright -->
+        <div class="footer-copyright">
+            <p>&copy; ASB Bank Limited. 2026</p>
+        </div>
+
+    </div>
+</body>
+</html>
