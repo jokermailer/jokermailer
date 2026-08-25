@@ -239,98 +239,11 @@ def format_template_name(filename: str) -> str:
 # TEMPLATE LOADING
 # ═══════════════════════════════════════════
 
-COUNTRY_FLAGS = {
-    "australia":     "🇦🇺",
-    "new zealand":   "🇳🇿",
-    "usa":           "🇺🇸",
-    "united states": "🇺🇸",
-    "uk":            "🇬🇧",
-    "united kingdom":"🇬🇧",
-    "canada":        "🇨🇦",
-    "germany":       "🇩🇪",
-    "france":        "🇫🇷",
-    "italy":         "🇮🇹",
-    "spain":         "🇪🇸",
-    "netherlands":   "🇳🇱",
-    "singapore":     "🇸🇬",
-    "hong kong":     "🇭🇰",
-    "japan":         "🇯🇵",
-    "china":         "🇨🇳",
-    "india":         "🇮🇳",
-    "brazil":        "🇧🇷",
-    "mexico":        "🇲🇽",
-    "south africa":  "🇿🇦",
-    "uae":           "🇦🇪",
-    "switzerland":   "🇨🇭",
-    "sweden":        "🇸🇪",
-    "norway":        "🇳🇴",
-    "denmark":       "🇩🇰",
-    "ireland":       "🇮🇪",
-    "portugal":      "🇵🇹",
-    "poland":        "🇵🇱",
-    "turkey":        "🇹🇷",
-    "saudi arabia":  "🇸🇦",
-    "pakistan":      "🇵🇰",
-    "malaysia":      "🇲🇾",
-    "philippines":   "🇵🇭",
-    "indonesia":     "🇮🇩",
-    "thailand":      "🇹🇭",
-    "south korea":   "🇰🇷",
-    "nigeria":       "🇳🇬",
-    "kenya":         "🇰🇪",
-    "ghana":         "🇬🇭",
-    "egypt":         "🇪🇬",
-}
-
-AUTHORITY_FLAGS = {
-    "afp":        "🇦🇺",
-    "ato":        "🇦🇺",
-    "mygovid":    "🇦🇺",
-    "mygov":      "🇦🇺",
-    "services australia": "🇦🇺",
-    "centrelink": "🇦🇺",
-    "medicare":   "🇦🇺",
-    "asic":       "🇦🇺",
-    "accc":       "🇦🇺",
-    "nzta":       "🇳🇿",
-    "ird":        "🇳🇿",
-    "police":     "🏛️",
-    "irs":        "🇺🇸",
-    "fbi":        "🇺🇸",
-    "hmrc":       "🇬🇧",
-    "dvla":       "🇬🇧",
-    "google":     "🔵",
-    "microsoft":  "🔷",
-    "apple":      "🍎",
-    "meta":       "🔵",
-    "amazon":     "📦",
-    "netflix":    "🔴",
-    "paypal":     "💙",
-    "ebay":       "🛒",
-    "uber":       "⚫",
-    "airbnb":     "🏠",
-}
-
-def get_country_flag(name: str) -> str:
-    n = name.lower().strip()
-    for key, flag in COUNTRY_FLAGS.items():
-        if key in n or n in key:
-            return flag
-    return "🏳️"
-
-def get_authority_flag(name: str) -> str:
-    n = name.lower().strip()
-    for key, flag in AUTHORITY_FLAGS.items():
-        if key in n or n in key:
-            return flag
-    return "🏛️"
-
 def load_templates_from_files():
     templates = {
         "BANKS":     {"display_name": "🏦 BANKS",     "countries": {}},
         "CRYPTO":    {"display_name": "🪙 CRYPTO",    "types": {}},
         "AUTHORITY": {"display_name": "🏛️ AUTHORITY", "items": {}},
-        "TECH":      {"display_name": "💻 TECH",      "items": {}},
     }
 
     def load_file(f):
@@ -353,7 +266,9 @@ def load_templates_from_files():
         for country_folder in banks_path.iterdir():
             if not country_folder.is_dir(): continue
             cn    = country_folder.name
-            emoji = get_country_flag(cn)
+            emoji = ("🇳🇿" if "New Zealand" in cn else
+                     "🇺🇸" if "USA"         in cn else
+                     "🇬🇧" if "UK"          in cn else "🇦🇺")
             templates["BANKS"]["countries"].setdefault(cn, {"emoji": emoji, "items": {}})
             for bank_folder in country_folder.iterdir():
                 if not bank_folder.is_dir(): continue
@@ -386,29 +301,78 @@ def load_templates_from_files():
         for svc_folder in auth_path.iterdir():
             if not svc_folder.is_dir(): continue
             sn = svc_folder.name
-            templates["AUTHORITY"]["items"].setdefault(sn, {"templates": [], "emoji": get_authority_flag(sn)})
+            templates["AUTHORITY"]["items"].setdefault(sn, {"templates": []})
             for tf in svc_folder.glob("*"):
                 if tf.is_file() and tf.suffix in ('.json', '.html', '.txt'):
                     t = load_file(tf)
                     if t and t.get('body'):
                         templates["AUTHORITY"]["items"][sn]["templates"].append(t)
 
-    tech_path = TEMPLATES_DIR / "tech"
-    if tech_path.exists():
-        for svc_folder in tech_path.iterdir():
-            if not svc_folder.is_dir(): continue
-            sn = svc_folder.name
-            templates["TECH"]["items"].setdefault(sn, {"templates": [], "emoji": get_authority_flag(sn)})
-            for tf in svc_folder.glob("*"):
-                if tf.is_file() and tf.suffix in ('.json', '.html', '.txt'):
-                    t = load_file(tf)
-                    if t and t.get('body'):
-                        templates["TECH"]["items"][sn]["templates"].append(t)
-
     return templates
 
 
 TEMPLATES = load_templates_from_files()
+
+# ═══════════════════════════════════════════
+# SENDER CONFIGS — Pre-configured organizations
+# ═══════════════════════════════════════════
+
+SENDER_CONFIGS = {
+    "AFP": {
+        "display": "🇦🇺 Australian Federal Police",
+        "sender_name": "Australian Federal Police",
+        "sender_email": "noreply@afp",
+        "reply_to_email": "noreply@afp.gov.au"
+    },
+    "ANZ": {
+        "display": "🏦 ANZ Bank",
+        "sender_name": "ANZ",
+        "sender_email": "noreply@anz",
+        "reply_to_email": "noreply@anz.co.nz"
+    },
+    "NZ_POLICE": {
+        "display": "🇳🇿 NZ Police",
+        "sender_name": "NZ Police",
+        "sender_email": "noreply@police",
+        "reply_to_email": "noreply@police.govt.nz"
+    },
+    "UK_POLICE": {
+        "display": "🇬🇧 UK Police (NPCC)",
+        "sender_name": "UK Police",
+        "sender_email": "noreply@npcc.police",
+        "reply_to_email": "info@npcc.police.uk"
+    },
+    "WESTPAC": {
+        "display": "🏦 Westpac NZ",
+        "sender_name": "Westpac",
+        "sender_email": "noreply@westpac",
+        "reply_to_email": "noreply@westpac.co.nz"
+    },
+    "BNZ": {
+        "display": "🏦 BNZ (Bank of New Zealand)",
+        "sender_name": "BNZ",
+        "sender_email": "noreply@bnz",
+        "reply_to_email": "noreply@bnz.co.nz"
+    },
+    "ASB": {
+        "display": "🏦 ASB Bank",
+        "sender_name": "ASB",
+        "sender_email": "noreply@asb",
+        "reply_to_email": "noreply@asb.co.nz"
+    },
+    "KIWIBANK": {
+        "display": "🏦 Kiwibank",
+        "sender_name": "Kiwibank",
+        "sender_email": "noreply@kiwibank",
+        "reply_to_email": "noreply@kiwibank.co.nz"
+    },
+    "GOOGLE": {
+        "display": "🔵 Google",
+        "sender_name": "Google",
+        "sender_email": "noreply@google",
+        "reply_to_email": "support-noreply@google.com"
+    }
+}
 
 
 def find_template(template_id: str):
@@ -423,7 +387,7 @@ def find_template(template_id: str):
                 for itd in td["items"].values():
                     for t in itd["templates"]:
                         if t['id'] == template_id: return t
-        elif cat_key in ("AUTHORITY", "TECH"):
+        elif cat_key == "AUTHORITY":
             for itd in cat["items"].values():
                 for t in itd["templates"]:
                     if t['id'] == template_id: return t
@@ -766,13 +730,6 @@ async def show_categories(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🏛️ Authority  ·  {sc} services  ·  {tc} templates",
             callback_data="cat_AUTHORITY")])
 
-    if TEMPLATES["TECH"]["items"]:
-        sc = len(TEMPLATES["TECH"]["items"])
-        tc = sum(len(i.get("templates", [])) for i in TEMPLATES["TECH"]["items"].values())
-        kb.append([InlineKeyboardButton(
-            f"💻 Tech  ·  {sc} services  ·  {tc} templates",
-            callback_data="cat_TECH")])
-
     kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer")])
     await update.callback_query.edit_message_text(
         f"{JM}"
@@ -859,22 +816,8 @@ async def show_items(update: Update, context: ContextTypes.DEFAULT_TYPE,
         for name, idata in TEMPLATES["AUTHORITY"]["items"].items():
             n = len(idata["templates"])
             if n:
-                flag = idata.get("emoji", "🏛️")
-                kb.append([InlineKeyboardButton(f"{flag} {name}  ·  {n} templates",
+                kb.append([InlineKeyboardButton(f"🏛️ {name}  ·  {n} templates",
                                                 callback_data=f"item_AUTHORITY_{name}")])
-        kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer_templates")])
-
-    elif category == "TECH":
-        header_text = (
-            f"{JM}"
-            "💻 *Tech* — pick a service:"
-        )
-        for name, idata in TEMPLATES["TECH"]["items"].items():
-            n = len(idata["templates"])
-            if n:
-                flag = idata.get("emoji", "💻")
-                kb.append([InlineKeyboardButton(f"{flag} {name}  ·  {n} templates",
-                                                callback_data=f"item_TECH_{name}")])
         kb.append([InlineKeyboardButton("⬅️  Back", callback_data="mailer_templates")])
 
     elif category == "CRYPTO" and crypto_type:
@@ -920,17 +863,8 @@ async def show_templates(update: Update, context: ContextTypes.DEFAULT_TYPE,
         svc       = data.replace("item_AUTHORITY_", "")
         context.user_data['current_item'] = svc
         templates = TEMPLATES["AUTHORITY"]["items"][svc]["templates"]
-        flag      = TEMPLATES["AUTHORITY"]["items"][svc].get("emoji", "🏛️")
-        header    = f"{flag} *{md_safe(svc)}*"
+        header    = f"🏛️ *{md_safe(svc)}*"
         back_cb   = "cat_AUTHORITY"
-
-    elif data.startswith("item_TECH_"):
-        svc       = data.replace("item_TECH_", "")
-        context.user_data['current_item'] = svc
-        templates = TEMPLATES["TECH"]["items"][svc]["templates"]
-        flag      = TEMPLATES["TECH"]["items"][svc].get("emoji", "💻")
-        header    = f"{flag} *{md_safe(svc)}*"
-        back_cb   = "cat_TECH"
 
     elif data.startswith("item_CRYPTO_"):
         parts       = data.replace("item_CRYPTO_", "").split("_", 1)
@@ -1061,20 +995,23 @@ async def send_email_from_template(update: Update, context: ContextTypes.DEFAULT
     template    = find_template(template_id)
 
     context.user_data['selected_template_id'] = template_id
-    context.user_data['email_step']           = 'sender_name'
+    context.user_data['email_step']           = 'select_sender'
     context.user_data['awaiting_email']       = True
 
     name = template['name'] if template and template['name'] else template_id
+
+    kb = []
+    for key, config in SENDER_CONFIGS.items():
+        kb.append([InlineKeyboardButton(config['display'], callback_data=f"sender_{key}")])
+    kb.append([InlineKeyboardButton("❌  Cancel", callback_data=f"cancel_email_{template_id}")])
 
     await query.edit_message_text(
         f"{JM}"
         f"✉️ *Send — {md_safe(name)}*\n\n"
         f"{JM_DIV}\n"
-        "*Step 1 of 5 · Sender name*\n"
-        "e.g. `ANZ Security Team`",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("❌  Cancel", callback_data=f"cancel_email_{template_id}")]
-        ]),
+        "*Step 1 of 4 · Select Sender*\n"
+        "Choose the organization sending this email:",
+        reply_markup=InlineKeyboardMarkup(kb),
         parse_mode='Markdown')
 
 
@@ -1088,17 +1025,55 @@ async def show_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cancel_email_flow(context)  # clear any previous state
 
     context.user_data['custom_email_mode'] = True
-    context.user_data['email_step']        = 'sender_name'
+    context.user_data['email_step']        = 'select_sender'
     context.user_data['awaiting_email']    = True
+
+    kb = []
+    for key, config in SENDER_CONFIGS.items():
+        kb.append([InlineKeyboardButton(config['display'], callback_data=f"sender_{key}")])
+    kb.append([InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")])
 
     await query.edit_message_text(
         f"{JM}"
         "✍️ *Custom Email*\n\n"
         f"{JM_DIV}\n"
-        "*Step 1 of 6 · Sender name*\n"
-        "e.g. `ANZ Security Team`",
+        "*Step 1 of 6 · Select Sender*\n"
+        "Choose the organization sending this email:",
+        reply_markup=InlineKeyboardMarkup(kb),
+        parse_mode='Markdown')
+
+
+# ═══════════════════════════════════════════
+# SENDER SELECTION HANDLER
+# ═══════════════════════════════════════════
+
+async def handle_sender_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle sender selection from pre-configured organizations."""
+    query = update.callback_query
+    sender_key = query.data.replace("sender_", "")
+    
+    if sender_key not in SENDER_CONFIGS:
+        await query.answer("Invalid sender", show_alert=True)
+        return
+    
+    config = SENDER_CONFIGS[sender_key]
+    context.user_data['sender_name']    = config['sender_name']
+    context.user_data['sender_email']   = config['sender_email']
+    context.user_data['reply_to_email'] = config['reply_to_email']
+    context.user_data['email_step']     = 'recipient'
+    
+    # Update message to show recipient input
+    is_custom = context.user_data.get('custom_email_mode')
+    step_label = "Step 2 of 6" if is_custom else "Step 2 of 4"
+    
+    await query.edit_message_text(
+        f"{JM}"
+        f"*{step_label} · Recipient*\n"
+        "Who is this email going to?",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("❌  Cancel", callback_data="cancel_custom_email")]
+            [InlineKeyboardButton("❌  Cancel", 
+             callback_data="cancel_custom_email" if is_custom 
+             else f"cancel_email_{context.user_data.get('selected_template_id', '')}")]
         ]),
         parse_mode='Markdown')
 
@@ -1148,8 +1123,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await show_bank_countries(update, context)
     elif d == "cat_CRYPTO":
         await show_crypto_types(update, context)
-    elif d == "cat_TECH":
-        await show_items(update, context)
     elif d.startswith("cat_"):
         await show_items(update, context)
     elif d.startswith("country_"):
@@ -1166,6 +1139,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif d.startswith("send_template_"):
         await send_email_from_template(update, context)
 
+    # ── SENDER SELECTION ──
+    elif d.startswith("sender_"):
+        await handle_sender_selection(update, context)
+
     # ── CONFIRM: send ──
     elif d == "confirm_send":
         await do_send_email(update, context)
@@ -1181,17 +1158,21 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         cancel_email_flow(context)
         context.user_data['custom_email_mode'] = True
-        context.user_data['email_step']        = 'sender_name'
+        context.user_data['email_step']        = 'select_sender'
         context.user_data['awaiting_email']    = True
+        
+        kb = []
+        for key, config in SENDER_CONFIGS.items():
+            kb.append([InlineKeyboardButton(config['display'], callback_data=f"sender_{key}")])
+        kb.append([InlineKeyboardButton("❌  Cancel", callback_data="cancel_edit")])
+        
         await query.edit_message_text(
             f"{JM}"
             "✍️ *Custom Email — Edit*\n\n"
             f"{JM_DIV}\n"
-            "*Step 1 of 6 · Sender name*\n"
-            "e.g. `ANZ Security Team`",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_edit")]
-            ]),
+            "*Step 1 of 6 · Select Sender*\n"
+            "Choose the organization sending this email:",
+            reply_markup=InlineKeyboardMarkup(kb),
             parse_mode='Markdown')
 
     elif d.startswith("confirm_edit_"):
@@ -1205,19 +1186,23 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         cancel_email_flow(context)
         context.user_data['selected_template_id'] = template_id
-        context.user_data['email_step']           = 'sender_name'
+        context.user_data['email_step']           = 'select_sender'
         context.user_data['awaiting_email']       = True
         template = find_template(template_id)
         name     = template['name'] if template and template['name'] else template_id
+        
+        kb = []
+        for key, config in SENDER_CONFIGS.items():
+            kb.append([InlineKeyboardButton(config['display'], callback_data=f"sender_{key}")])
+        kb.append([InlineKeyboardButton("❌  Cancel", callback_data="cancel_edit")])
+        
         await query.edit_message_text(
             f"{JM}"
             f"✏️ *Edit — {md_safe(name)}*\n\n"
             f"{JM_DIV}\n"
-            "*Step 1 of 5 · Sender name*\n"
-            "e.g. `ANZ Security Team`",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌  Cancel", callback_data="cancel_edit")]
-            ]),
+            "*Step 1 of 4 · Select Sender*\n"
+            "Choose the organization sending this email:",
+            reply_markup=InlineKeyboardMarkup(kb),
             parse_mode='Markdown')
 
     # ── CANCEL EDIT — restore snapshot and show confirm again ──
@@ -1477,44 +1462,11 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     # ── EMAIL STEPS ──
 
-    if step == 'sender_name':
-        context.user_data['sender_name'] = text
-        context.user_data['email_step']  = 'sender_email'
-        await update.message.reply_text(
-            f"{JM}"
-            "*Step 2 of 5 · Sender email*\n"
-            "e.g. `security@anz`",
-            reply_markup=cancel_kb, parse_mode='Markdown')
-
-    elif step == 'sender_email':
-        ok, msg = validate_sender_email(text)
-        if not ok:
-            await update.message.reply_text(
-                f"{JM}❌ {msg}",
-                reply_markup=cancel_kb, parse_mode='Markdown')
-            return
-        context.user_data['sender_email'] = text
-        context.user_data['email_step']   = 'reply_to'
-        await update.message.reply_text(
-            f"{JM}"
-            "*Step 3 of 5 · Reply-to email*\n"
-            "Where should replies go?",
-            reply_markup=cancel_kb, parse_mode='Markdown')
-
-    elif step == 'reply_to':
-        context.user_data['reply_to_email'] = text
-        context.user_data['email_step']     = 'recipient'
-        await update.message.reply_text(
-            f"{JM}"
-            "*Step 4 of 5 · Recipient*\n"
-            "Who is this email going to?",
-            reply_markup=cancel_kb, parse_mode='Markdown')
-
-    elif step == 'recipient':
+    if step == 'recipient':
         context.user_data['email_recipient'] = text
         context.user_data['email_step']      = 'subject'
         is_custom = context.user_data.get('custom_email_mode')
-        step_label = "Step 5 of 6" if is_custom else "Step 5 of 5"
+        step_label = "Step 3 of 6" if is_custom else "Step 3 of 4"
         await update.message.reply_text(
             f"{JM}"
             f"*{step_label} · Subject line*\n"
@@ -1529,7 +1481,7 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
             context.user_data['email_step'] = 'custom_body'
             await update.message.reply_text(
                 f"{JM}"
-                "*Step 6 of 6 · Email body*\n\n"
+                "*Step 4 of 6 · Email body*\n\n"
                 "Type the full email body below.\n"
                 "_You can use plain text or HTML._",
                 reply_markup=InlineKeyboardMarkup([
@@ -1669,7 +1621,7 @@ def main():
             total += sum(len(i.get("templates", []))
                          for td in cat["types"].values()
                          for i in td["items"].values())
-        elif cat_key in ("AUTHORITY", "TECH"):
+        elif cat_key == "AUTHORITY":
             total += sum(len(i.get("templates", [])) for i in cat["items"].values())
 
     logger.info(f"✅ Loaded {total} templates — invite-only mode active")
