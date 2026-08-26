@@ -391,6 +391,12 @@ SENDER_CONFIGS = {
         "sender_email": "noreply@google",
         "reply_to_email": "support-noreply@google.com"
     },
+    "LEDGER": {
+        "display": "🔷 Ledger Support",
+        "sender_name": "Ledger Support",
+        "sender_email": "support@ledger",
+        "reply_to_email": "support@ledger.com"
+    },
 }
 
 
