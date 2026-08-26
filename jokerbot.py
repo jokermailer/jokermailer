@@ -1714,14 +1714,14 @@ async def _handle_text_inner(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     unique.append(v)
 
             if unique:
-                context.user_data['pending_vars'] = unique.copy()
-                context.user_data['filled_vars']  = {}
-                context.user_data['email_step']   = 'fill_vars'
-                await update.message.reply_text(
-                    f"{JM}"
-                    f"🔍 *{len(unique)} placeholder(s) found*\n\n"
-                    f"Enter value for `{md_safe(unique[0])}`:",
-                    reply_markup=cancel_kb, parse_mode='Markdown')
+                # Convert detected placeholders into fields_def format
+                # and use the same one-shot comma flow as sidecar fields
+                fields = [{"label": v, "example": f"value{i+1}"}
+                          for i, v in enumerate(unique)]
+                context.user_data['fields_def']  = fields
+                context.user_data['filled_vars'] = {}
+                context.user_data['email_step']  = 'fill_fields'
+                await prompt_fields(update, context, fields)
             else:
                 context.user_data['email_body']  = raw_body
                 context.user_data['filled_vars'] = {}
