@@ -617,7 +617,7 @@ def cancel_email_flow(context: ContextTypes.DEFAULT_TYPE) -> None:
               'sender_name', 'sender_email', 'reply_to_email',
               'selected_template_id', 'raw_body', 'pending_vars', 'filled_vars',
               'template_list_back_cb', 'custom_email_mode',
-              'fields_def', 'fields_error']:
+              'fields_def', 'fields_error', 'selected_smtp']:  # ← ADDED selected_smtp
         context.user_data.pop(k, None)
 
 
@@ -669,6 +669,15 @@ async def show_confirm_screen(update: Update, context: ContextTypes.DEFAULT_TYPE
     cancel_cb = "cancel_custom_email" if cd.get('custom_email_mode') else f"cancel_email_{template_id}"
     edit_cb   = "confirm_edit_custom" if cd.get('custom_email_mode') else f"confirm_edit_{template_id}"
 
+    # ── NEW: Show selected SMTP if chosen ──
+    selected_smtp = cd.get('selected_smtp')
+    smtp_line = ""
+    if selected_smtp:
+        for srv in SMTP_SERVERS:
+            if srv['name'] == selected_smtp:
+                smtp_line = f"\n🔌 *SMTP:*         `{md_safe(srv['name'])}` ✓"
+                break
+
     text = (
         f"{JM}"
         "📋 *Review Before Sending*\n\n"
@@ -679,16 +688,19 @@ async def show_confirm_screen(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"↩️  *Reply-to:*      `{reply_to}`\n"
         f"📬 *Recipient:*     `{recipient}`\n"
         f"📌 *Subject:*       `{subject}`"
+        f"{smtp_line}"  # ← NEW: Show selected SMTP
         f"{extra_block}\n\n"
         f"{JM_DIV}\n"
         "Does everything look correct?\n\n"
         "✅ Tap *Send* to fire it off\n"
+        "🔌 Tap *SMTP* to choose a server _(optional)_\n"
         "✏️  Tap *Edit* to start over\n"
         "❌ Tap *Cancel* to abort"
     )
 
     kb = [
         [InlineKeyboardButton("✅  Send Now",  callback_data="confirm_send")],
+        [InlineKeyboardButton("🔌  Choose SMTP", callback_data="select_smtp")],  # ← NEW
         [InlineKeyboardButton("✏️  Edit",       callback_data=edit_cb)],
         [InlineKeyboardButton("❌  Cancel",     callback_data=cancel_cb)],
     ]
@@ -699,6 +711,41 @@ async def show_confirm_screen(update: Update, context: ContextTypes.DEFAULT_TYPE
     else:
         await update.callback_query.edit_message_text(
             text, reply_markup=InlineKeyboardMarkup(kb), parse_mode='Markdown')
+
+
+# ═══════════════════════════════════════════
+# SMTP SELECTION SCREEN
+# ═══════════════════════════════════════════
+
+async def show_smtp_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show list of available SMTP servers to choose from."""
+    query = update.callback_query
+    
+    # Filter to only online servers
+    online_servers = [s for s in SMTP_SERVERS if s['online']]
+    
+    if not online_servers:
+        await query.answer(
+            "No SMTP servers online right now. Will auto-select on send.",
+            show_alert=True)
+        return
+    
+    kb = []
+    for srv in online_servers:
+        kb.append([InlineKeyboardButton(
+            f"✅ {srv['name']} ({srv['user']})",
+            callback_data=f"smtp_pick_{srv['name']}"
+        )])
+    
+    kb.append([InlineKeyboardButton("❌  Cancel (Auto-select)", callback_data="confirm_send")])
+    
+    await query.edit_message_text(
+        f"{JM}"
+        "🔌 *Choose SMTP Server*\n\n"
+        "Pick which server to send through:\n\n"
+        "_Tap Cancel to send automatically._",
+        reply_markup=InlineKeyboardMarkup(kb),
+        parse_mode='Markdown')
 
 
 # ═══════════════════════════════════════════
@@ -1320,6 +1367,16 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]),
             parse_mode='Markdown')
 
+    # ── SMTP SELECTION ──
+    elif d.startswith("smtp_pick_"):
+        smtp_name = d.replace("smtp_pick_", "")
+        context.user_data['selected_smtp'] = smtp_name
+        await query.answer(f"✅ Selected: {smtp_name}")
+        await show_confirm_screen(update, context)
+    
+    elif d == "select_smtp":
+        await show_smtp_selection(update, context)
+
     # ── CONFIRM ──
     elif d == "confirm_send":
         await do_send_email(update, context)
@@ -1330,7 +1387,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for k in ['sender_name', 'sender_email', 'reply_to_email',
                       'email_recipient', 'email_subject', 'email_body',
                       'filled_vars', 'raw_body', 'custom_email_mode',
-                      'selected_template_id', 'fields_def']
+                      'selected_template_id', 'fields_def', 'selected_smtp']
         }
         cancel_email_flow(context)
         context.user_data['custom_email_mode'] = True
@@ -1352,7 +1409,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for k in ['sender_name', 'sender_email', 'reply_to_email',
                       'email_recipient', 'email_subject', 'email_body',
                       'filled_vars', 'raw_body', 'custom_email_mode',
-                      'selected_template_id', 'fields_def']
+                      'selected_template_id', 'fields_def', 'selected_smtp']
         }
         cancel_email_flow(context)
         context.user_data['selected_template_id'] = template_id
@@ -1442,7 +1499,8 @@ def _try_send_via(srv: dict, msg) -> None:
 
 
 def send_email(recipient, subject, body,
-               sender_name=None, sender_email=None, reply_to_email=None):
+               sender_name=None, sender_email=None, reply_to_email=None,
+               force_smtp_name=None):  # ← NEW parameter
     if not SMTP_SERVERS:
         raise Exception("No SMTP servers configured. Add SMTP_1_HOST/USER/PASS to .env")
 
@@ -1457,6 +1515,19 @@ def send_email(recipient, subject, body,
         msg['Reply-To'] = reply_to_email
     msg.attach(MIMEText(body, 'html'))
 
+    # ── NEW: If user selected a specific SMTP, try only that one ──
+    if force_smtp_name:
+        for srv in SMTP_SERVERS:
+            if srv['name'] == force_smtp_name:
+                try:
+                    _try_send_via(srv, msg)
+                    logger.info(f"Email sent → {recipient} via [{srv['name']}] (forced)")
+                    return
+                except Exception as e:
+                    raise Exception(f"Failed to send via {force_smtp_name}: {e}")
+        raise Exception(f"SMTP server '{force_smtp_name}' not found")
+    
+    # ── FALLBACK: Auto-select from available servers ──
     ordered = sorted(SMTP_SERVERS, key=lambda s: (0 if s["online"] else 1))
     errors  = []
     for srv in ordered:
@@ -1481,12 +1552,13 @@ async def do_send_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         send_email(
-            recipient      = cd['email_recipient'],
-            subject        = cd['email_subject'],
-            body           = cd['email_body'],
-            sender_name    = cd.get('sender_name'),
-            sender_email   = cd.get('sender_email'),
-            reply_to_email = cd.get('reply_to_email'),
+            recipient       = cd['email_recipient'],
+            subject         = cd['email_subject'],
+            body            = cd['email_body'],
+            sender_name     = cd.get('sender_name'),
+            sender_email    = cd.get('sender_email'),
+            reply_to_email  = cd.get('reply_to_email'),
+            force_smtp_name = cd.get('selected_smtp'),  # ← NEW: Pass selected SMTP
         )
         await query.edit_message_text(
             f"{JM}"
