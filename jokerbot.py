@@ -538,7 +538,7 @@ def load_templates_from_files():
 TEMPLATES = load_templates_from_files()
 
 
-def find_template(template_id: str) -> dict | None:
+def find_template(template_id: str) -> Optional[dict]:
     """Search all sections for a template by id. Returns template dict or None."""
     for cdata in TEMPLATES["countries"].values():
         for idata in cdata["items"].values():
