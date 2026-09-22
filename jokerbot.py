@@ -5,6 +5,7 @@ import ssl
 import logging
 import re
 from pathlib import Path
+from typing import Optional
 from html.parser import HTMLParser
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
