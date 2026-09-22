@@ -401,7 +401,7 @@ def load_templates_from_files():
         "email":     {},   # folder → { sender_cfg, templates }
     }
 
-    def load_file(f: Path) -> dict | None:
+    def load_file(f: Path) -> Optional[dict]:
         try:
             if f.suffix == '.json':
                 raw  = json.loads(f.read_text(encoding='utf-8'))
